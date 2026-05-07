@@ -1,0 +1,54 @@
+{
+  "name": "@nuntly/sdk-mcp",
+  "version": "1.0.0-alpha.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./ai": {
+      "import": {
+        "types": "./dist/ai.d.ts",
+        "default": "./dist/ai.js"
+      }
+    }
+  },
+  "bin": {
+    "nuntly-mcp": "./bin/mcp-server.js"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nuntly/nuntly-mcp.git"
+  },
+  "homepage": "https://nuntly.com",
+  "bugs": {
+    "url": "https://github.com/nuntly/nuntly-mcp/issues"
+  },
+  "scripts": {
+    "clean": "rimraf dist .tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "build": "tsup",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@nuntly/sdk": "^1.0.0-alpha.1",
+    "@modelcontextprotocol/sdk": "^1.11.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "~24.10.9",
+    "rimraf": "~6.1.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.8.0"
+  }
+}
