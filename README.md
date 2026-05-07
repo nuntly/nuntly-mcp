@@ -154,11 +154,11 @@ This package follows [Semantic Versioning 2.0](https://semver.org). The publishe
 
 ## Previous versions
 
-Versions before `1.0.0` were published from the [`nuntly/nuntly-sdk-typescript`](https://github.com/nuntly/nuntly-sdk-typescript/tree/legacy/stainless-v0.x) repository (`packages/mcp-server` directory). They remain installable from npm via `npm install @nuntly/sdk-mcp@0`.
+Versions `0.x` remain installable from npm via `npm install @nuntly/sdk-mcp@0` for backwards compatibility.
 
 ## Contributing
 
-Issues, bug reports, and feature requests are welcome at [github.com/nuntly/nuntly-mcp/issues](https://github.com/nuntly/nuntly-mcp/issues). Tool definitions are generated from the Nuntly OpenAPI spec, so direct PRs that modify tool surfaces will likely be redirected to upstream feedback. Documentation, examples, and developer-experience improvements are the highest-impact contribution areas.
+Issues, bug reports, and feature requests are welcome at [github.com/nuntly/nuntly-mcp/issues](https://github.com/nuntly/nuntly-mcp/issues).
 
 ## License
 
