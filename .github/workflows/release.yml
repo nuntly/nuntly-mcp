@@ -49,4 +49,12 @@ jobs:
       - run: bun run build
 
       - name: Publish @nuntly/sdk-mcp
-        run: npm publish --provenance --access public
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          case "$PKG_VERSION" in
+            *-alpha*) TAG=alpha ;;
+            *-beta*)  TAG=beta ;;
+            *-rc*)    TAG=rc ;;
+            *)        TAG=latest ;;
+          esac
+          npm publish --provenance --access public --tag "$TAG"
