@@ -57,4 +57,7 @@ jobs:
             *-rc*)    TAG=rc ;;
             *)        TAG=latest ;;
           esac
-          npm publish --provenance --access public --tag "$TAG"
+          # npx invokes npm 11.5.1+ which auto-triggers Trusted
+          # Publisher OIDC. Node 22 LTS ships with npm 10.x which does
+          # not, so the publish would 404 on the registry's auth check.
+          npx -y npm@latest publish --provenance --access public --tag "$TAG"
