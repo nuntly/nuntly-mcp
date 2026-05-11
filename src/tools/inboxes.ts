@@ -27,6 +27,24 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
     },
   );
 
+  // DELETE /inboxes/{inboxId}
+  server.tool(
+    'delete-inbox',
+    "Soft-delete an inbox.",
+    {
+    inboxId: z.string().describe("The inboxId"),
+    } as any,
+    async (args: Record<string, unknown>) => {
+      try {
+        const inboxId = String(args.inboxId);
+        const result = await nuntly.inboxes.delete(inboxId);
+        return formatResult(result);
+      } catch (error) {
+        return formatError(error);
+      }
+    },
+  );
+
   // GET /inboxes
   server.tool(
     'list-inboxes',
@@ -38,7 +56,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
     } as any,
     async (args: Record<string, unknown>) => {
       try {
-        const page = await nuntly.inboxes.list({ cursor: args.cursor, limit: args.limit } as any);
+        const page = await nuntly.inboxes.list({ cursor: args.cursor, limit: args.limit, namespaceId: args.namespaceId } as any);
         return formatResult({ data: page.data, nextCursor: page.nextCursor });
       } catch (error) {
         return formatError(error);
@@ -64,44 +82,6 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
     },
   );
 
-  // PATCH /inboxes/{inboxId}
-  server.tool(
-    'update-inbox',
-    "Update an inbox.",
-    {
-    inboxId: z.string().describe("The inboxId"),
-    name: z.string().describe("The display name of the inbox.").optional(),
-    } as any,
-    async (args: Record<string, unknown>) => {
-      try {
-        const inboxId = String(args.inboxId);
-        const { inboxId: _inboxId, ...body } = args;
-        const result = await nuntly.inboxes.update(inboxId, body as any);
-        return formatResult(result);
-      } catch (error) {
-        return formatError(error);
-      }
-    },
-  );
-
-  // DELETE /inboxes/{inboxId}
-  server.tool(
-    'delete-inbox',
-    "Soft-delete an inbox.",
-    {
-    inboxId: z.string().describe("The inboxId"),
-    } as any,
-    async (args: Record<string, unknown>) => {
-      try {
-        const inboxId = String(args.inboxId);
-        const result = await nuntly.inboxes.delete(inboxId);
-        return formatResult(result);
-      } catch (error) {
-        return formatError(error);
-      }
-    },
-  );
-
   // POST /inboxes/{inboxId}/messages
   server.tool(
     'send-inbox-message',
@@ -120,6 +100,26 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
         const inboxId = String(args.inboxId);
         const { inboxId: _inboxId, ...body } = args;
         const result = await nuntly.inboxes.messages.send(inboxId, body as any);
+        return formatResult(result);
+      } catch (error) {
+        return formatError(error);
+      }
+    },
+  );
+
+  // PATCH /inboxes/{inboxId}
+  server.tool(
+    'update-inbox',
+    "Update an inbox.",
+    {
+    inboxId: z.string().describe("The inboxId"),
+    name: z.string().describe("The display name of the inbox.").optional(),
+    } as any,
+    async (args: Record<string, unknown>) => {
+      try {
+        const inboxId = String(args.inboxId);
+        const { inboxId: _inboxId, ...body } = args;
+        const result = await nuntly.inboxes.update(inboxId, body as any);
         return formatResult(result);
       } catch (error) {
         return formatError(error);

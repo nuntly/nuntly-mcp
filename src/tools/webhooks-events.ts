@@ -5,6 +5,26 @@ import { formatResult, formatError } from '../helpers.js';
 
 export function registerWebhooksEventsTools(server: McpServer, nuntly: Nuntly): void {
 
+  // GET /webhooks/{id}/events/{eventId}/deliveries
+  server.tool(
+    'list-webhook-event-deliveries',
+    "Returns all delivery attempts for a webhook event, including HTTP status codes and response times.",
+    {
+    id: z.string().describe("The webhooks event ID"),
+    eventId: z.string().describe("The eventId"),
+    } as any,
+    async (args: Record<string, unknown>) => {
+      try {
+        const id = String(args.id);
+        const eventId = String(args.eventId);
+        const result = await nuntly.webhooks.events.deliveries(id, eventId);
+        return formatResult(result);
+      } catch (error) {
+        return formatError(error);
+      }
+    },
+  );
+
   // GET /webhooks/events
   server.tool(
     'list-webhooks-events',
@@ -36,26 +56,6 @@ export function registerWebhooksEventsTools(server: McpServer, nuntly: Nuntly): 
         const id = String(args.id);
         const eventId = String(args.eventId);
         const result = await nuntly.webhooks.events.replay(id, eventId);
-        return formatResult(result);
-      } catch (error) {
-        return formatError(error);
-      }
-    },
-  );
-
-  // GET /webhooks/{id}/events/{eventId}/deliveries
-  server.tool(
-    'list-webhook-event-deliveries',
-    "Returns all delivery attempts for a webhook event, including HTTP status codes and response times.",
-    {
-    id: z.string().describe("The webhooks event ID"),
-    eventId: z.string().describe("The eventId"),
-    } as any,
-    async (args: Record<string, unknown>) => {
-      try {
-        const id = String(args.id);
-        const eventId = String(args.eventId);
-        const result = await nuntly.webhooks.events.deliveries(id, eventId);
         return formatResult(result);
       } catch (error) {
         return formatError(error);
