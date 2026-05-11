@@ -117,25 +117,25 @@ Tools available:
 
 **Agents**: `retrieve-agent-memory`, `upsert-agent-memory`
 
-**API Keys**: `retrieve-api-key`, `update-api-key`, `delete-api-key`, `create-api-key`, `list-api-keys`
+**API Keys**: `create-api-key`, `delete-api-key`, `list-api-keys`, `retrieve-api-key`, `update-api-key`
 
-**Domains**: `list-domains`, `retrieve-domain`, `delete-domain`, `create-domain`, `update-domain`
+**Domains**: `create-domain`, `delete-domain`, `list-domains`, `retrieve-domain`, `update-domain`
 
-**Emails**: `retrieve-email-stats`, `retrieve-email`, `retrieve-email-events`, `retrieve-email-content`, `list-emails`, `send-email`, `cancel-email`, `send-bulk-emails`, `retrieve-bulk-emails`
+**Emails**: `cancel-email`, `list-emails`, `retrieve-bulk-emails`, `retrieve-email`, `retrieve-email-content`, `retrieve-email-events`, `retrieve-email-stats`, `send-bulk-emails`, `send-email`
 
-**Inboxes**: `create-inbox`, `list-inboxes`, `retrieve-inbox`, `update-inbox`, `delete-inbox`, `send-inbox-message`
+**Inboxes**: `create-inbox`, `delete-inbox`, `list-inboxes`, `retrieve-inbox`, `send-inbox-message`, `update-inbox`
 
-**Messages**: `list-messages`, `retrieve-message`, `retrieve-message-content`, `list-message-attachments`, `retrieve-message-attachment`, `update-message`, `reply-to-message`, `forward-message`
+**Messages**: `forward-message`, `list-message-attachments`, `list-messages`, `reply-to-message`, `retrieve-message`, `retrieve-message-attachment`, `retrieve-message-content`, `update-message`
 
-**Namespaces**: `create-namespace`, `list-namespaces`, `retrieve-namespace`, `update-namespace`, `delete-namespace`, `list-namespace-inboxes`
+**Namespaces**: `create-namespace`, `delete-namespace`, `list-namespace-inboxes`, `list-namespaces`, `retrieve-namespace`, `update-namespace`
 
-**Organizations**: `retrieve-organization-usage`, `retrieve-organizations`, `retrieve-organization`
+**Organizations**: `retrieve-organization`, `retrieve-organization-usage`, `retrieve-organizations`
 
-**Threads**: `list-inbox-threads`, `retrieve-thread`, `update-thread`, `list-thread-messages`
+**Threads**: `list-inbox-threads`, `list-thread-messages`, `retrieve-thread`, `update-thread`
 
-**Webhooks**: `retrieve-webhook`, `update-webhook`, `delete-webhook`, `create-webhook`, `list-webhooks`
+**Webhooks**: `create-webhook`, `delete-webhook`, `list-webhooks`, `retrieve-webhook`, `update-webhook`
 
-**Webhooks Events**: `list-webhooks-events`, `replay-webhook-event`, `list-webhook-event-deliveries`
+**Webhooks Events**: `list-webhook-event-deliveries`, `list-webhooks-events`, `replay-webhook-event`
 
 ## FAQ
 

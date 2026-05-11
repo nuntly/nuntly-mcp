@@ -18,7 +18,27 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
     async (args: Record<string, unknown>) => {
       try {
         const inboxId = String(args.inboxId);
-        const page = await nuntly.inboxes.threads.list(inboxId, { cursor: args.cursor, limit: args.limit } as any);
+        const page = await nuntly.inboxes.threads.list(inboxId, { cursor: args.cursor, limit: args.limit, labels: args.labels } as any);
+        return formatResult({ data: page.data, nextCursor: page.nextCursor });
+      } catch (error) {
+        return formatError(error);
+      }
+    },
+  );
+
+  // GET /threads/{threadId}/messages
+  server.tool(
+    'list-thread-messages',
+    "List messages in a thread (chronological order).",
+    {
+    threadId: z.string().describe("The threadId"),
+    cursor: z.string().describe("Pagination cursor from a previous response").optional(),
+    limit: z.number().describe("Maximum number of items to return").optional(),
+    } as any,
+    async (args: Record<string, unknown>) => {
+      try {
+        const threadId = String(args.threadId);
+        const page = await nuntly.threads.messages.list(threadId, { cursor: args.cursor, limit: args.limit } as any);
         return formatResult({ data: page.data, nextCursor: page.nextCursor });
       } catch (error) {
         return formatError(error);
@@ -60,26 +80,6 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
         const { threadId: _threadId, ...body } = args;
         const result = await nuntly.threads.update(threadId, body as any);
         return formatResult(result);
-      } catch (error) {
-        return formatError(error);
-      }
-    },
-  );
-
-  // GET /threads/{threadId}/messages
-  server.tool(
-    'list-thread-messages',
-    "List messages in a thread (chronological order).",
-    {
-    threadId: z.string().describe("The threadId"),
-    cursor: z.string().describe("Pagination cursor from a previous response").optional(),
-    limit: z.number().describe("Maximum number of items to return").optional(),
-    } as any,
-    async (args: Record<string, unknown>) => {
-      try {
-        const threadId = String(args.threadId);
-        const page = await nuntly.threads.messages.list(threadId, { cursor: args.cursor, limit: args.limit } as any);
-        return formatResult({ data: page.data, nextCursor: page.nextCursor });
       } catch (error) {
         return formatError(error);
       }
