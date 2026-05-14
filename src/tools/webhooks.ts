@@ -80,7 +80,7 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
     },
   );
 
-  // PUT /webhooks/{id}
+  // PATCH /webhooks/{id}
   server.tool(
     'update-webhook',
     "Update the endpoint URL, subscribed event types, or rotate the signing secret.",
