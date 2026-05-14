@@ -80,7 +80,7 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
     },
   );
 
-  // PUT /api-keys/{id}
+  // PATCH /api-keys/{id}
   server.tool(
     'update-api-key',
     "Update the key name, permissions, or restrict it to specific sending domains.",
@@ -88,7 +88,7 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
     id: z.string().describe("The api key ID"),
     name: z.string().describe("The name of the api key").optional(),
     status: z.enum(['enabled', 'disabled']).optional(),
-    permission: z.enum(['fullAccess', 'sendingAccess']).describe("The permission type for the api key"),
+    permission: z.enum(['fullAccess', 'sendingAccess']).describe("The permission type for the api key").optional(),
     domainIds: z.array(z.string()).describe("The domain ids to restrict the api key to (only for sendingAccess)").optional(),
     } as any,
     async (args: Record<string, unknown>) => {

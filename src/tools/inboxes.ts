@@ -67,7 +67,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   // GET /inboxes/{inboxId}
   server.tool(
     'retrieve-inbox',
-    "Retrieve an inbox with thread stats.",
+    "Retrieve an inbox.",
     {
     inboxId: z.string().describe("The inboxId"),
     } as any,
