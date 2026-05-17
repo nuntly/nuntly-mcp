@@ -1,25 +1,32 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { Nuntly } from '@nuntly/sdk';
-import { formatResult, formatError } from '../helpers.js';
+import type { Nuntly, CursorPageParams, ThreadsQuery, UpdateThreadRequest } from '@nuntly/sdk';
+import { formatStructuredResult, formatError } from '../helpers.js';
 
 export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
 
   // GET /inboxes/{inboxId}/threads
-  server.tool(
+  server.registerTool(
     'list-inbox-threads',
-    "List threads in an inbox.",
     {
-    inboxId: z.string().describe("The inboxId"),
-    cursor: z.string().describe("The cursor to retrieve the next page of results").optional(),
-    limit: z.number().describe("The maximum number of results to return").optional(),
-    labels: z.string().describe("Comma-separated labels to filter by (AND logic). Threads with spam/trash are excluded by default unless explicitly requested via ?labels=spam or ?labels=trash.").optional(),
-    } as any,
-    async (args: Record<string, unknown>) => {
+      description: "List threads in an inbox.",
+      inputSchema: {
+        inboxId: z.string().describe("The inboxId"),
+        cursor: z.string().describe("The cursor to retrieve the next page of results").optional(),
+        limit: z.number().describe("The maximum number of results to return").optional(),
+        labels: z.string().describe("Comma-separated labels to filter by (AND logic). Threads with spam/trash are excluded by default unless explicitly requested via ?labels=spam or ?labels=trash.").optional(),
+      },
+      outputSchema: {
+        data: z.array(z.record(z.string(), z.unknown())),
+        nextCursor: z.string().optional(),
+      },
+      annotations: {"openWorldHint":true,"readOnlyHint":true},
+    },
+    async (args) => {
       try {
         const inboxId = String(args.inboxId);
-        const page = await nuntly.inboxes.threads.list(inboxId, { cursor: args.cursor, limit: args.limit, labels: args.labels } as any);
-        return formatResult({ data: page.data, nextCursor: page.nextCursor });
+        const page = await nuntly.inboxes.threads.list(inboxId, { cursor: args.cursor, limit: args.limit, labels: args.labels } as ThreadsQuery);
+        return formatStructuredResult({ data: page.data, nextCursor: page.nextCursor });
       } catch (error) {
         return formatError(error);
       }
@@ -27,19 +34,26 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
   );
 
   // GET /threads/{threadId}/messages
-  server.tool(
+  server.registerTool(
     'list-thread-messages',
-    "List messages in a thread (chronological order).",
     {
-    threadId: z.string().describe("The threadId"),
-    cursor: z.string().describe("Pagination cursor from a previous response").optional(),
-    limit: z.number().describe("Maximum number of items to return").optional(),
-    } as any,
-    async (args: Record<string, unknown>) => {
+      description: "List messages in a thread (chronological order).",
+      inputSchema: {
+        threadId: z.string().describe("The threadId"),
+        cursor: z.string().describe("Pagination cursor from a previous response").optional(),
+        limit: z.number().describe("Maximum number of items to return").optional(),
+      },
+      outputSchema: {
+        data: z.array(z.record(z.string(), z.unknown())),
+        nextCursor: z.string().optional(),
+      },
+      annotations: {"openWorldHint":true,"readOnlyHint":true},
+    },
+    async (args) => {
       try {
         const threadId = String(args.threadId);
-        const page = await nuntly.threads.messages.list(threadId, { cursor: args.cursor, limit: args.limit } as any);
-        return formatResult({ data: page.data, nextCursor: page.nextCursor });
+        const page = await nuntly.threads.messages.list(threadId, { cursor: args.cursor, limit: args.limit } as CursorPageParams);
+        return formatStructuredResult({ data: page.data, nextCursor: page.nextCursor });
       } catch (error) {
         return formatError(error);
       }
@@ -47,17 +61,33 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
   );
 
   // GET /threads/{threadId}
-  server.tool(
+  server.registerTool(
     'retrieve-thread',
-    "Retrieve a thread. Pass ?markRead=true to automatically remove the unread label from all messages.",
     {
-    threadId: z.string().describe("The threadId"),
-    } as any,
-    async (args: Record<string, unknown>) => {
+      description: "Retrieve a thread. Pass ?markRead=true to automatically remove the unread label from all messages.",
+      inputSchema: {
+        threadId: z.string().describe("The threadId"),
+      },
+      outputSchema: {
+        id: z.string().describe("The id of the thread"),
+        createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"),
+        updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(),
+        domainId: z.string().describe("The id of the domain."),
+        domainName: z.string().describe("The domain name."),
+        inboxId: z.string().describe("The id of the inbox."),
+        subject: z.string().describe("The original subject line."),
+        lastMessageAt: z.string().describe("The timestamp of the most recent message."),
+        messageCount: z.number().describe("The number of messages in the thread."),
+        labels: z.array(z.string()).describe("Aggregated labels from all messages in the thread."),
+        agentId: z.string().describe("The AI agent identifier."),
+      },
+      annotations: {"openWorldHint":true,"readOnlyHint":true},
+    },
+    async (args) => {
       try {
         const threadId = String(args.threadId);
         const result = await nuntly.threads.retrieve(threadId);
-        return formatResult(result);
+        return formatStructuredResult(result);
       } catch (error) {
         return formatError(error);
       }
@@ -65,21 +95,27 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
   );
 
   // PATCH /threads/{threadId}
-  server.tool(
+  server.registerTool(
     'update-thread',
-    "Update thread labels and agent assignment. Label operations apply to all messages in the thread.",
     {
-    threadId: z.string().describe("The threadId"),
-    addLabels: z.array(z.string()).describe("Labels to add to all messages in the thread.").optional(),
-    removeLabels: z.array(z.string()).describe("Labels to remove from all messages in the thread.").optional(),
-    agentId: z.string().describe("The AI agent identifier.").optional(),
-    } as any,
-    async (args: Record<string, unknown>) => {
+      description: "Update thread labels and agent assignment. Label operations apply to all messages in the thread.",
+      inputSchema: {
+        threadId: z.string().describe("The threadId"),
+        addLabels: z.array(z.string()).describe("Labels to add to all messages in the thread.").optional(),
+        removeLabels: z.array(z.string()).describe("Labels to remove from all messages in the thread.").optional(),
+        agentId: z.string().describe("The AI agent identifier.").optional(),
+      },
+      outputSchema: {
+        id: z.string().describe("The id of the resource."),
+      },
+      annotations: {"openWorldHint":true},
+    },
+    async (args) => {
       try {
         const threadId = String(args.threadId);
         const { threadId: _threadId, ...body } = args;
-        const result = await nuntly.threads.update(threadId, body as any);
-        return formatResult(result);
+        const result = await nuntly.threads.update(threadId, body as UpdateThreadRequest);
+        return formatStructuredResult(result);
       } catch (error) {
         return formatError(error);
       }

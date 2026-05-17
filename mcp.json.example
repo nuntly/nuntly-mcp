@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "nuntly": {
+      "command": "npx",
+      "args": [
+        "@nuntly/sdk-mcp"
+      ],
+      "env": {
+        "NUNTLY_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
