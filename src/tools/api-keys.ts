@@ -1,25 +1,35 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { Nuntly } from '@nuntly/sdk';
-import { formatResult, formatError } from '../helpers.js';
+import type { Nuntly, CreateApiKeyRequest, CursorPageParams, UpdateApiKeyRequest } from '@nuntly/sdk';
+import { formatStructuredResult, formatError } from '../helpers.js';
 
 export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
 
   // POST /api-keys
-  server.tool(
+  server.registerTool(
     'create-api-key',
-    "Generate a new API key. The key value is only returned once — store it securely.",
     {
-    name: z.string().describe("The name of the api key").optional(),
-    status: z.enum(['enabled', 'disabled', 'revoked']).describe("The status for the api key").optional(),
-    permission: z.enum(['fullAccess', 'sendingAccess']).describe("The permission type for the api key"),
-    domainIds: z.array(z.string()).describe("The domain ids to restrict the api key to (only for sendingAccess)").optional(),
-    } as any,
-    async (args: Record<string, unknown>) => {
+      description: "Generate a new API key. The key value is only returned once. Store it securely.",
+      inputSchema: {
+        name: z.string().describe("The name of the api key").optional(),
+        status: z.enum(['enabled', 'disabled', 'revoked']).describe("The status for the api key").optional(),
+        permission: z.enum(['fullAccess', 'sendingAccess']).describe("The permission type for the api key"),
+        domainIds: z.array(z.string()).describe("The domain ids to restrict the api key to (only for sendingAccess)").optional(),
+      },
+      outputSchema: {
+        id: z.string().describe("The id of the api key"),
+        name: z.string().describe("The name of the api key").optional(),
+        apiKey: z.string().describe("The content of the api key"),
+        shortToken: z.string().describe("The last 6 characters of the api key token"),
+        status: z.enum(['enabled', 'disabled', 'revoked']).describe("The status for the api key"),
+      },
+      annotations: {"openWorldHint":true},
+    },
+    async (args) => {
       try {
         const body = args;
-        const result = await nuntly.apiKeys.create(body as any);
-        return formatResult(result);
+        const result = await nuntly.apiKeys.create(body as CreateApiKeyRequest);
+        return formatStructuredResult(result);
       } catch (error) {
         return formatError(error);
       }
@@ -27,17 +37,23 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   );
 
   // DELETE /api-keys/{id}
-  server.tool(
+  server.registerTool(
     'delete-api-key',
-    "Revoke an API key. Requests authenticating with this key will be rejected immediately.",
     {
-    id: z.string().describe("The api key ID"),
-    } as any,
-    async (args: Record<string, unknown>) => {
+      description: "Revoke an API key. Requests authenticating with this key will be rejected immediately.",
+      inputSchema: {
+        id: z.string().describe("The api key ID"),
+      },
+      outputSchema: {
+        id: z.string().describe("The id of the api key"),
+      },
+      annotations: {"openWorldHint":true,"destructiveHint":true},
+    },
+    async (args) => {
       try {
         const id = String(args.id);
         const result = await nuntly.apiKeys.delete(id);
-        return formatResult(result);
+        return formatStructuredResult(result);
       } catch (error) {
         return formatError(error);
       }
@@ -45,17 +61,24 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   );
 
   // GET /api-keys
-  server.tool(
+  server.registerTool(
     'list-api-keys',
-    "Returns all API keys for the organization. Key values are never included in list responses.",
     {
-    cursor: z.string().describe("Pagination cursor from a previous response").optional(),
-    limit: z.number().describe("Maximum number of items to return").optional(),
-    } as any,
-    async (args: Record<string, unknown>) => {
+      description: "Returns all API keys for the organization. Key values are never included in list responses.",
+      inputSchema: {
+        cursor: z.string().describe("Pagination cursor from a previous response").optional(),
+        limit: z.number().describe("Maximum number of items to return").optional(),
+      },
+      outputSchema: {
+        data: z.array(z.record(z.string(), z.unknown())),
+        nextCursor: z.string().optional(),
+      },
+      annotations: {"openWorldHint":true,"readOnlyHint":true},
+    },
+    async (args) => {
       try {
-        const page = await nuntly.apiKeys.list({ cursor: args.cursor, limit: args.limit } as any);
-        return formatResult({ data: page.data, nextCursor: page.nextCursor });
+        const page = await nuntly.apiKeys.list({ cursor: args.cursor, limit: args.limit } as CursorPageParams);
+        return formatStructuredResult({ data: page.data, nextCursor: page.nextCursor });
       } catch (error) {
         return formatError(error);
       }
@@ -63,17 +86,27 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   );
 
   // GET /api-keys/{id}
-  server.tool(
+  server.registerTool(
     'retrieve-api-key',
-    "Returns API key metadata. The key value is never returned after creation.",
     {
-    id: z.string().describe("The api key ID"),
-    } as any,
-    async (args: Record<string, unknown>) => {
+      description: "Returns API key metadata. The key value is never returned after creation.",
+      inputSchema: {
+        id: z.string().describe("The api key ID"),
+      },
+      outputSchema: {
+        id: z.string().describe("The id of the api key"),
+        name: z.string().describe("The name of the api key").optional(),
+        shortToken: z.string().describe("The last 6 characters of the api key token"),
+        status: z.enum(['enabled', 'disabled', 'revoked']).describe("The status for the api key"),
+        createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"),
+      },
+      annotations: {"openWorldHint":true,"readOnlyHint":true},
+    },
+    async (args) => {
       try {
         const id = String(args.id);
         const result = await nuntly.apiKeys.retrieve(id);
-        return formatResult(result);
+        return formatStructuredResult(result);
       } catch (error) {
         return formatError(error);
       }
@@ -81,22 +114,28 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   );
 
   // PATCH /api-keys/{id}
-  server.tool(
+  server.registerTool(
     'update-api-key',
-    "Update the key name, permissions, or restrict it to specific sending domains.",
     {
-    id: z.string().describe("The api key ID"),
-    name: z.string().describe("The name of the api key").optional(),
-    status: z.enum(['enabled', 'disabled']).optional(),
-    permission: z.enum(['fullAccess', 'sendingAccess']).describe("The permission type for the api key").optional(),
-    domainIds: z.array(z.string()).describe("The domain ids to restrict the api key to (only for sendingAccess)").optional(),
-    } as any,
-    async (args: Record<string, unknown>) => {
+      description: "Update the key name, permissions, or restrict it to specific sending domains.",
+      inputSchema: {
+        id: z.string().describe("The api key ID"),
+        name: z.string().describe("The name of the api key").optional(),
+        status: z.enum(['enabled', 'disabled']).optional(),
+        permission: z.enum(['fullAccess', 'sendingAccess']).describe("The permission type for the api key").optional(),
+        domainIds: z.array(z.string()).describe("The domain ids to restrict the api key to (only for sendingAccess)").optional(),
+      },
+      outputSchema: {
+        id: z.string().describe("The id of the api key"),
+      },
+      annotations: {"openWorldHint":true},
+    },
+    async (args) => {
       try {
         const id = String(args.id);
         const { id: _id, ...body } = args;
-        const result = await nuntly.apiKeys.update(id, body as any);
-        return formatResult(result);
+        const result = await nuntly.apiKeys.update(id, body as UpdateApiKeyRequest);
+        return formatStructuredResult(result);
       } catch (error) {
         return formatError(error);
       }

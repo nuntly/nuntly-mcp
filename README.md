@@ -30,7 +30,13 @@ MCP server for [Nuntly](https://nuntly.com), the developer-first email platform.
 
 ### Claude Desktop
 
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+Add to your Claude Desktop config:
+
+| OS | Path |
+|----|------|
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+| Linux | `~/.config/Claude/claude_desktop_config.json` |
 
 ```json
 {
@@ -48,7 +54,13 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 ### Claude Code
 
-Add to your project `.mcp.json`:
+Use the built-in `claude mcp add` command:
+
+```bash
+claude mcp add nuntly -- npx @nuntly/sdk-mcp
+```
+
+Then export `NUNTLY_API_KEY` in your shell, or paste this shape into `.mcp.json` manually:
 
 ```json
 {
@@ -129,7 +141,7 @@ Tools available:
 
 **Namespaces**: `create-namespace`, `delete-namespace`, `list-namespace-inboxes`, `list-namespaces`, `retrieve-namespace`, `update-namespace`
 
-**Organizations**: `retrieve-organization`, `retrieve-organization-usage`, `retrieve-organizations`
+**Organizations**: `list-organizations`, `retrieve-organization`, `retrieve-organization-usage`
 
 **Threads**: `list-inbox-threads`, `list-thread-messages`, `retrieve-thread`, `update-thread`
 
@@ -159,6 +171,20 @@ Versions `0.x` remain installable from npm via `npm install @nuntly/sdk-mcp@0` f
 ## Contributing
 
 Issues, bug reports, and feature requests are welcome at [github.com/nuntly/nuntly-mcp/issues](https://github.com/nuntly/nuntly-mcp/issues).
+
+## Troubleshooting
+
+**Server does not appear in the Claude Desktop tools list**
+Validate the JSON syntax of `claude_desktop_config.json` (a trailing comma silently breaks the whole file), fully quit and restart Claude Desktop, and confirm the `command` path resolves on your `$PATH` (try running it from a terminal first).
+
+**`NUNTLY_API_KEY missing` at startup**
+Grab a key from [nuntly.com](https://nuntly.com) and paste it under `env` in your MCP client config. The server reads the variable from the spawned process environment, not from your shell.
+
+**Tool returns `isError: true`**
+The structured `content` block contains an `error` object with `status`, `code`, and `requestId`. Use the `requestId` when contacting support. A 401 means the API key is missing, revoked, or scoped to a different organization.
+
+**`command not found: npx`**
+Install Node.js 20 or later from [nodejs.org](https://nodejs.org). `npx` ships with Node and is the spawn target used by every MCP client in the examples above.
 
 ## License
 
