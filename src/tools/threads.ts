@@ -9,6 +9,7 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'list-inbox-threads',
     {
+      title: "List Inbox Threads",
       description: "List threads in an inbox.",
       inputSchema: {
         inboxId: z.string().describe("The inboxId"),
@@ -17,7 +18,7 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
         labels: z.string().describe("Comma-separated labels to filter by (AND logic). Threads with spam/trash are excluded by default unless explicitly requested via ?labels=spam or ?labels=trash.").optional(),
       },
       outputSchema: {
-        data: z.array(z.record(z.string(), z.unknown())),
+        data: z.array(z.object({ id: z.string().describe("The id of the thread"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"), updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(), domainId: z.string().describe("The id of the domain."), domainName: z.string().describe("The domain name."), inboxId: z.string().describe("The id of the inbox."), subject: z.string().describe("The original subject line."), lastMessageAt: z.string().describe("The timestamp of the most recent message."), messageCount: z.number().describe("The number of messages in the thread."), labels: z.array(z.string()).describe("Aggregated labels from all messages in the thread."), agentId: z.string().describe("The AI agent identifier.") })),
         nextCursor: z.string().optional(),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
@@ -37,6 +38,7 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'list-thread-messages',
     {
+      title: "List Thread Messages",
       description: "List messages in a thread (chronological order).",
       inputSchema: {
         threadId: z.string().describe("The threadId"),
@@ -44,7 +46,7 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
         limit: z.number().describe("Maximum number of items to return").optional(),
       },
       outputSchema: {
-        data: z.array(z.record(z.string(), z.unknown())),
+        data: z.array(z.object({ id: z.string().describe("The id of the message"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"), threadId: z.string().describe("The id of the thread."), messageId: z.string().describe("The email Message-ID header."), from: z.string().describe("The sender address (RFC 5322 format, e.g. \"Jane Doe <jane@example.com>\" or \"jane@example.com\")."), to: z.array(z.string()).describe("The recipient addresses."), cc: z.array(z.string()).describe("The CC addresses."), bcc: z.array(z.string()).describe("The BCC addresses."), replyTo: z.array(z.string()).describe("The Reply-To addresses."), subject: z.string().describe("The message subject."), receivedAt: z.string().describe("The original date of the message."), status: z.enum(['received', 'sent', 'discarded', 'failed']).describe("The status of the message"), labels: z.array(z.string()).describe("The message labels."), attachmentCount: z.number().describe("The number of attachments.") })),
         nextCursor: z.string().optional(),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
@@ -64,6 +66,7 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-thread',
     {
+      title: "Retrieve Thread",
       description: "Retrieve a thread. Pass ?markRead=true to automatically remove the unread label from all messages.",
       inputSchema: {
         threadId: z.string().describe("The threadId"),
@@ -98,6 +101,7 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'update-thread',
     {
+      title: "Update Thread",
       description: "Update thread labels and agent assignment. Label operations apply to all messages in the thread.",
       inputSchema: {
         threadId: z.string().describe("The threadId"),

@@ -9,6 +9,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'forward-message',
     {
+      title: "Forward Message",
       description: "Forward a message to new recipients.",
       inputSchema: {
         messageId: z.string().describe("The messageId"),
@@ -39,6 +40,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'list-message-attachments',
     {
+      title: "List Message Attachments",
       description: "List all attachments for a message.",
       inputSchema: {
         messageId: z.string().describe("The messageId"),
@@ -63,6 +65,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'list-messages',
     {
+      title: "List Messages",
       description: "List all received messages across inboxes.",
       inputSchema: {
         cursor: z.string().describe("The cursor to retrieve the next page of results").optional(),
@@ -71,7 +74,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
         from: z.string().describe("Filter by sender address.").optional(),
       },
       outputSchema: {
-        data: z.array(z.record(z.string(), z.unknown())),
+        data: z.array(z.object({ id: z.string().describe("The id of the message"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"), inboxId: z.string().describe("The id of the inbox, or null if routed to the default catch-all."), threadId: z.string().describe("The id of the thread."), messageId: z.string().describe("The email Message-ID header."), from: z.string().describe("The sender address (RFC 5322 format, e.g. \"Jane Doe <jane@example.com>\" or \"jane@example.com\")."), to: z.array(z.string()).describe("The recipient addresses."), cc: z.array(z.string()).describe("The CC addresses."), bcc: z.array(z.string()).describe("The BCC addresses."), replyTo: z.array(z.string()).describe("The Reply-To addresses."), subject: z.string().describe("The message subject."), receivedAt: z.string().describe("The original date of the message."), status: z.enum(['received', 'sent', 'discarded', 'failed']).describe("The status of the message"), labels: z.array(z.string()).describe("The message labels."), attachmentCount: z.number().describe("The number of attachments.") })),
         nextCursor: z.string().optional(),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
@@ -90,6 +93,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'reply-to-message',
     {
+      title: "Reply To Message",
       description: "Reply to a message. Set replyAll to true to reply to all recipients.",
       inputSchema: {
         messageId: z.string().describe("The messageId"),
@@ -121,6 +125,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-message',
     {
+      title: "Retrieve Message",
       description: "Retrieve a single message with inbox enrichment.",
       inputSchema: {
         messageId: z.string().describe("The messageId"),
@@ -160,6 +165,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-message-attachment',
     {
+      title: "Retrieve Message Attachment",
       description: "Retrieve an attachment with a presigned download URL.",
       inputSchema: {
         messageId: z.string().describe("The messageId"),
@@ -192,6 +198,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-message-content',
     {
+      title: "Retrieve Message Content",
       description: "Returns presigned URLs to download the HTML, plain-text, and raw MIME source of a received message.",
       inputSchema: {
         messageId: z.string().describe("The messageId"),
@@ -218,6 +225,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'update-message',
     {
+      title: "Update Message",
       description: "Update message labels. Only available for messages in user-created inboxes.",
       inputSchema: {
         messageId: z.string().describe("The messageId"),

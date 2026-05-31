@@ -9,6 +9,7 @@ export function registerAgentsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-agent-memory',
     {
+      title: "Retrieve Agent Memory",
       description: "Retrieve the memory for an AI agent.",
       inputSchema: {
         agentId: z.string().describe("The agentId"),
@@ -40,6 +41,7 @@ export function registerAgentsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'upsert-agent-memory',
     {
+      title: "Upsert Agent Memory",
       description: "Create or update the memory for an AI agent.",
       inputSchema: {
         agentId: z.string().describe("The agentId"),

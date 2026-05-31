@@ -9,6 +9,7 @@ export function registerDomainsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'create-domain',
     {
+      title: "Create Domain",
       description: "Add a domain for sending or receiving emails.",
       inputSchema: {
         name: z.string().describe("The name of the domain to send e-mails'"),
@@ -49,6 +50,7 @@ export function registerDomainsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'delete-domain',
     {
+      title: "Delete Domain",
       description: "Permanently deletes a domain along with its inboxes, received messages, attachments, and sending configuration. This action is irreversible.",
       inputSchema: {
         id: z.string().describe("The domain ID"),
@@ -73,13 +75,14 @@ export function registerDomainsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'list-domains',
     {
+      title: "List Domains",
       description: "Returns all domains with their verification and capability status.",
       inputSchema: {
         cursor: z.string().describe("Pagination cursor from a previous response").optional(),
         limit: z.number().describe("Maximum number of items to return").optional(),
       },
       outputSchema: {
-        data: z.array(z.record(z.string(), z.unknown())),
+        data: z.array(z.object({ id: z.string().describe("The id of the domain"), name: z.string().describe("The name of the domain to send e-mails'"), status: z.enum(['bootstrapping', 'pending', 'success', 'failed', 'temporary_failure']).describe("The status for the domain"), sendingStatus: z.enum(['enabled', 'disabled', 'paused']).describe("The sending status for the domain"), receivingStatus: z.enum(['bootstrapping', 'pending', 'success', 'failed', 'temporary_failure']).describe("The receiving status for the domain"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"), region: z.enum(['eu-west-1']).describe("The region of the domain data") })),
         nextCursor: z.string().optional(),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
@@ -98,6 +101,7 @@ export function registerDomainsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-domain',
     {
+      title: "Retrieve Domain",
       description: "Returns a domain with its DNS record configuration and current verification status for each record.",
       inputSchema: {
         id: z.string().describe("The domain ID"),
@@ -136,6 +140,7 @@ export function registerDomainsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'update-domain',
     {
+      title: "Update Domain",
       description: "Toggle sending, receiving, open tracking, or click tracking capabilities for a domain.",
       inputSchema: {
         id: z.string().describe("The domain ID"),

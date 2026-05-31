@@ -9,13 +9,14 @@ export function registerOrganizationsTools(server: McpServer, nuntly: Nuntly): v
   server.registerTool(
     'list-organizations',
     {
+      title: "List Organizations",
       description: "Returns all organizations the authenticated user belongs to.",
       inputSchema: {
         cursor: z.string().describe("Pagination cursor from a previous response").optional(),
         limit: z.number().describe("Maximum number of items to return").optional(),
       },
       outputSchema: {
-        data: z.array(z.record(z.string(), z.unknown())),
+        data: z.array(z.object({ id: z.string().describe("The id of the organization"), name: z.string().describe("The name of the organization"), status: z.enum(['enabled', 'disabled']).describe("The status of the organization") })),
         nextCursor: z.string().optional(),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
@@ -34,6 +35,7 @@ export function registerOrganizationsTools(server: McpServer, nuntly: Nuntly): v
   server.registerTool(
     'retrieve-organization',
     {
+      title: "Retrieve Organization",
       description: "Returns the organization's profile, plan, region, and account status.",
       inputSchema: {
         id: z.string().describe("The organization ID"),
@@ -60,6 +62,7 @@ export function registerOrganizationsTools(server: McpServer, nuntly: Nuntly): v
   server.registerTool(
     'retrieve-organization-usage',
     {
+      title: "Retrieve Organization Usage",
       description: "Returns current period usage metrics (daily and monthly) for sending and receiving, against your plan limits.",
       inputSchema: {
         id: z.string().describe("The organizations usage ID"),
