@@ -209,7 +209,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
         id: z.string().describe("The bulk id").optional(),
         emails: z.array(z.object({ id: z.string().optional(), status: z.enum(['queued', 'scheduled', 'processed', 'failed', 'sending', 'sent', 'delivered', 'bounced', 'complained', 'canceled', 'rejected']) })),
       },
-      annotations: {"openWorldHint":true,"idempotentHint":true},
+      annotations: {"openWorldHint":true},
     },
     async (args) => {
       try {
@@ -246,7 +246,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
         id: z.string().describe("The id of the email"),
         status: z.enum(['queued', 'scheduled', 'processed', 'failed', 'sending', 'sent', 'delivered', 'bounced', 'complained', 'canceled', 'rejected']).describe("The status of the email."),
       },
-      annotations: {"openWorldHint":true,"idempotentHint":true},
+      annotations: {"openWorldHint":true},
     },
     async (args) => {
       try {
