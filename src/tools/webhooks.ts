@@ -9,6 +9,7 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'create-webhook',
     {
+      title: "Create Webhook",
       description: "Register an endpoint to start receiving webhook events for your organization.",
       inputSchema: {
         name: z.string().describe("The name of the webhook").optional(),
@@ -42,6 +43,7 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'delete-webhook',
     {
+      title: "Delete Webhook",
       description: "Remove a webhook endpoint. No further events will be delivered to this URL.",
       inputSchema: {
         id: z.string().describe("The webhook ID"),
@@ -66,13 +68,14 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'list-webhooks',
     {
+      title: "List Webhooks",
       description: "Returns all registered webhook endpoints for the organization.",
       inputSchema: {
         cursor: z.string().describe("Pagination cursor from a previous response").optional(),
         limit: z.number().describe("Maximum number of items to return").optional(),
       },
       outputSchema: {
-        data: z.array(z.record(z.string(), z.unknown())),
+        data: z.array(z.object({ id: z.string().describe("The id of the webhook"), name: z.string().describe("The name of the webhook").optional(), endpointUrl: z.string().describe("The endpoint URL of the webhook"), status: z.enum(['enabled', 'disabled', 'revoked']).describe("The status of the webhook."), events: z.array(z.enum(['email.queued', 'email.scheduled', 'email.processed', 'email.sending', 'email.sent', 'email.delivered', 'email.opened', 'email.clicked', 'email.bounced', 'email.complained', 'email.rejected', 'email.deliveryDelayed', 'email.failed', 'email.renderingFailed', 'email.subscribed', 'email.unsubscribed', 'message.received', 'message.security.flagged', 'message.agent.triggered', 'message.sent', 'message.rejected'])).describe("The event types to subscribe to"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)") })),
         nextCursor: z.string().optional(),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
@@ -91,6 +94,7 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-webhook',
     {
+      title: "Retrieve Webhook",
       description: "Returns a webhook endpoint with its URL, subscribed events, and configuration.",
       inputSchema: {
         id: z.string().describe("The webhook ID"),
@@ -120,6 +124,7 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'update-webhook',
     {
+      title: "Update Webhook",
       description: "Update the endpoint URL, subscribed event types, or rotate the signing secret.",
       inputSchema: {
         id: z.string().describe("The webhook ID"),

@@ -103,12 +103,16 @@ Add to your Cursor MCP settings:
 
 ## Programmatic usage
 
-### Vercel AI SDK
+### Embed the server
+
+`createMcpServer` returns a fully-configured `McpServer` (all tools registered); connect it to any transport yourself.
 
 ```typescript
 import { createMcpServer } from '@nuntly/sdk-mcp/ai';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 const server = createMcpServer({ apiKey: process.env.NUNTLY_API_KEY });
+await server.connect(new StdioServerTransport());
 ```
 
 ### Custom integration

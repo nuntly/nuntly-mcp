@@ -9,6 +9,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'cancel-email',
     {
+      title: "Cancel Email",
       description: "Cancel a scheduled email before delivery. Only emails with `scheduled` status can be cancelled.",
       inputSchema: {
         id: z.string().describe("The email ID"),
@@ -34,13 +35,14 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'list-emails',
     {
+      title: "List Emails",
       description: "Returns sent emails ordered by submission date, newest first.",
       inputSchema: {
         cursor: z.string().describe("Pagination cursor from a previous response").optional(),
         limit: z.number().describe("Maximum number of items to return").optional(),
       },
       outputSchema: {
-        data: z.array(z.record(z.string(), z.unknown())),
+        data: z.array(z.object({ id: z.string().describe("The id of the email"), from: z.string().describe("The e-mail address of the sender"), to: z.union([z.string(), z.array(z.string())]).describe("The primary recipient(s) of the email"), subject: z.string().describe("The subject of the e-mail"), status: z.enum(['queued', 'scheduled', 'processed', 'failed', 'sending', 'sent', 'delivered', 'bounced', 'complained', 'canceled', 'rejected']).describe("The status of the email."), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"), scheduledAt: z.string().describe("The date at which the email is scheduled to be sent").optional() })),
         nextCursor: z.string().optional(),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
@@ -59,6 +61,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-bulk-emails',
     {
+      title: "Retrieve Bulk Emails",
       description: "Returns the emails submitted in a bulk request.",
       inputSchema: {
         bulkId: z.string().describe("The bulkId"),
@@ -84,6 +87,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-email',
     {
+      title: "Retrieve Email",
       description: "Returns an email with its current delivery status and metadata.",
       inputSchema: {
         id: z.string().describe("The email ID"),
@@ -125,6 +129,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-email-content',
     {
+      title: "Retrieve Email Content",
       description: "Returns presigned URLs to download the HTML, plain-text, and raw MIME source of a sent email.",
       inputSchema: {
         id: z.string().describe("The emails content ID"),
@@ -154,6 +159,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-email-events',
     {
+      title: "Retrieve Email Events",
       description: "Returns the delivery event history for an email (sent, delivered, opened, bounced, etc.).",
       inputSchema: {
         id: z.string().describe("The emails event ID"),
@@ -178,6 +184,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-email-stats',
     {
+      title: "Retrieve Email Stats",
       description: "Returns aggregated daily sending statistics for the current period.",
       outputSchema: {
         start: z.string().describe("The start date of the stats range"),
@@ -200,6 +207,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'send-bulk-emails',
     {
+      title: "Send Bulk Emails",
       description: "Send up to 20 emails in a single request. Use `fallback` to set default values shared across all messages.",
       inputSchema: {
         fallback: z.object({ from: z.string().describe("The e-mail address of the sender").optional(), to: z.union([z.string(), z.array(z.string())]).describe("The primary recipient(s) of the email").optional(), cc: z.union([z.string(), z.array(z.string())]).describe("The carbon copy recipient(s) of the email").optional(), bcc: z.union([z.string(), z.array(z.string())]).describe("The blind carbon copy recipient(s) of the email").optional(), replyTo: z.union([z.string(), z.array(z.string())]).describe("The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address").optional(), subject: z.string().describe("The subject of the e-mail").optional(), text: z.string().describe("The plaintext version of the email").optional(), html: z.string().describe("The HTML version of the email").optional(), headers: z.record(z.string(), z.unknown()).describe("The headers to add to the email").optional(), tags: z.array(z.object({ name: z.string().describe("The name of the tag"), value: z.string().describe("The tag to add to the email") })).describe("The tags to add to the email").optional(), variables: z.record(z.string(), z.unknown()).describe("The variables for the template").optional() }).describe("Used as a fallback field email value if no value is present in emails.").optional(),
@@ -226,6 +234,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'send-email',
     {
+      title: "Send Email",
       description: "Send transactional emails through Nuntly platform. It supports HTML and plain-text emails, attachments, labels, custom headers and scheduling.",
       inputSchema: {
         from: z.string().describe("The e-mail address of the sender"),

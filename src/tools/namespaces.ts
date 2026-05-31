@@ -9,6 +9,7 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
   server.registerTool(
     'create-namespace',
     {
+      title: "Create Namespace",
       description: "Create a new namespace.",
       inputSchema: {
         name: z.string().describe("The display name of the namespace."),
@@ -38,6 +39,7 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
   server.registerTool(
     'delete-namespace',
     {
+      title: "Delete Namespace",
       description: "Soft-delete a namespace. Rejects if it has active inboxes.",
       inputSchema: {
         namespaceId: z.string().describe("The namespaceId"),
@@ -62,6 +64,7 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
   server.registerTool(
     'list-namespace-inboxes',
     {
+      title: "List Namespace Inboxes",
       description: "List inboxes in a namespace.",
       inputSchema: {
         namespaceId: z.string().describe("The namespaceId"),
@@ -69,7 +72,7 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
         limit: z.number().describe("The maximum number of results to return").optional(),
       },
       outputSchema: {
-        data: z.array(z.record(z.string(), z.unknown())),
+        data: z.array(z.object({ id: z.string().describe("The id of the inbox"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"), updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(), domainId: z.string().describe("The id of the domain."), domainName: z.string().describe("The domain name."), address: z.string().describe("The local-part of the email address."), name: z.string().describe("The display name of the inbox."), namespaceId: z.string().describe("The id of the namespace."), namespaceName: z.string().describe("The display name of the namespace."), agentId: z.string().describe("The AI agent identifier.") })),
         nextCursor: z.string().optional(),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
@@ -89,13 +92,14 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
   server.registerTool(
     'list-namespaces',
     {
+      title: "List Namespaces",
       description: "List all namespaces.",
       inputSchema: {
         cursor: z.string().describe("The cursor to retrieve the next page of results").optional(),
         limit: z.number().describe("The maximum number of results to return").optional(),
       },
       outputSchema: {
-        data: z.array(z.record(z.string(), z.unknown())),
+        data: z.array(z.object({ id: z.string().describe("The id of the namespace"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"), updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(), name: z.string().describe("The display name of the namespace."), externalId: z.string().describe("The external identifier for the namespace.") })),
         nextCursor: z.string().optional(),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
@@ -114,6 +118,7 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
   server.registerTool(
     'retrieve-namespace',
     {
+      title: "Retrieve Namespace",
       description: "Retrieve a namespace with inbox stats.",
       inputSchema: {
         namespaceId: z.string().describe("The namespaceId"),
@@ -144,6 +149,7 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
   server.registerTool(
     'update-namespace',
     {
+      title: "Update Namespace",
       description: "Update a namespace.",
       inputSchema: {
         namespaceId: z.string().describe("The namespaceId"),

@@ -9,6 +9,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'create-inbox',
     {
+      title: "Create Inbox",
       description: "Create a new inbox on a verified domain.",
       inputSchema: {
         domainId: z.string().describe("The id of the domain for this inbox. Defaults to your provided domain when omitted.").optional(),
@@ -46,6 +47,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'delete-inbox',
     {
+      title: "Delete Inbox",
       description: "Soft-delete an inbox.",
       inputSchema: {
         inboxId: z.string().describe("The inboxId"),
@@ -70,6 +72,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'list-inboxes',
     {
+      title: "List Inboxes",
       description: "List all inboxes.",
       inputSchema: {
         cursor: z.string().describe("The cursor to retrieve the next page of results").optional(),
@@ -77,7 +80,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
         namespaceId: z.string().describe("Filter by namespace.").optional(),
       },
       outputSchema: {
-        data: z.array(z.record(z.string(), z.unknown())),
+        data: z.array(z.object({ id: z.string().describe("The id of the inbox"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"), updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(), domainId: z.string().describe("The id of the domain."), domainName: z.string().describe("The domain name."), address: z.string().describe("The local-part of the email address."), name: z.string().describe("The display name of the inbox."), namespaceId: z.string().describe("The id of the namespace."), namespaceName: z.string().describe("The display name of the namespace."), agentId: z.string().describe("The AI agent identifier.") })),
         nextCursor: z.string().optional(),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
@@ -96,6 +99,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-inbox',
     {
+      title: "Retrieve Inbox",
       description: "Retrieve an inbox.",
       inputSchema: {
         inboxId: z.string().describe("The inboxId"),
@@ -129,6 +133,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'send-inbox-message',
     {
+      title: "Send Inbox Message",
       description: "Send a new message from an inbox.",
       inputSchema: {
         inboxId: z.string().describe("The inboxId"),
@@ -163,6 +168,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'update-inbox',
     {
+      title: "Update Inbox",
       description: "Update an inbox.",
       inputSchema: {
         inboxId: z.string().describe("The inboxId"),

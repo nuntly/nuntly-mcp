@@ -9,6 +9,7 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'create-api-key',
     {
+      title: "Create Api Key",
       description: "Generate a new API key. The key value is only returned once. Store it securely.",
       inputSchema: {
         name: z.string().describe("The name of the api key").optional(),
@@ -40,6 +41,7 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'delete-api-key',
     {
+      title: "Delete Api Key",
       description: "Revoke an API key. Requests authenticating with this key will be rejected immediately.",
       inputSchema: {
         id: z.string().describe("The api key ID"),
@@ -64,13 +66,14 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'list-api-keys',
     {
+      title: "List Api Keys",
       description: "Returns all API keys for the organization. Key values are never included in list responses.",
       inputSchema: {
         cursor: z.string().describe("Pagination cursor from a previous response").optional(),
         limit: z.number().describe("Maximum number of items to return").optional(),
       },
       outputSchema: {
-        data: z.array(z.record(z.string(), z.unknown())),
+        data: z.array(z.object({ id: z.string().describe("The id of the api key"), name: z.string().describe("The name of the api key").optional(), shortToken: z.string().describe("The last 6 characters of the api key token"), status: z.enum(['enabled', 'disabled', 'revoked']).describe("The status for the api key"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)") })),
         nextCursor: z.string().optional(),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
@@ -89,6 +92,7 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-api-key',
     {
+      title: "Retrieve Api Key",
       description: "Returns API key metadata. The key value is never returned after creation.",
       inputSchema: {
         id: z.string().describe("The api key ID"),
@@ -117,6 +121,7 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'update-api-key',
     {
+      title: "Update Api Key",
       description: "Update the key name, permissions, or restrict it to specific sending domains.",
       inputSchema: {
         id: z.string().describe("The api key ID"),
