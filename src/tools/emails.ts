@@ -189,7 +189,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
       outputSchema: {
         start: z.string().describe("The start date of the stats range"),
         end: z.string().describe("The end date of the stats range"),
-        stats: z.array(z.object({ occurredOn: z.string(), queued: z.number(), scheduled: z.number(), processed: z.number(), sending: z.number(), sent: z.number(), delivered: z.number(), deliveredDelayed: z.number(), bounced: z.number(), failed: z.number(), rejected: z.number(), canceled: z.number(), complaintReceived: z.number(), renderingFailed: z.number(), opened: z.number(), uniqueOpened: z.number(), clicked: z.number(), uniqueClicked: z.number() })),
+        stats: z.array(z.object({ occurredOn: z.string(), queued: z.number(), scheduled: z.number(), processed: z.number(), sending: z.number(), sent: z.number(), delivered: z.number(), deliveryDelayed: z.number(), bounced: z.number(), failed: z.number(), rejected: z.number(), canceled: z.number(), complaintReceived: z.number(), renderingFailed: z.number(), opened: z.number(), uniqueOpened: z.number(), clicked: z.number(), uniqueClicked: z.number() })),
       },
       annotations: {"openWorldHint":true,"readOnlyHint":true},
     },
