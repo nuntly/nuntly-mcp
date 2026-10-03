@@ -1,6 +1,6 @@
 {
   "name": "@nuntly/sdk-mcp",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -41,7 +41,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@nuntly/sdk": "^1.2.0",
+    "@nuntly/sdk": "^1.2.1",
     "@modelcontextprotocol/sdk": "^1.13.0",
     "zod": "^3.24.0"
   },

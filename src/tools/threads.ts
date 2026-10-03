@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { Nuntly, CursorPageParams, ThreadsQuery, UpdateThreadRequest } from '@nuntly/sdk';
+import type { Nuntly, CursorPageParams, RetrieveThreadQuery, ThreadsQuery, UpdateThreadRequest } from '@nuntly/sdk';
 import { formatStructuredResult, formatError } from '../helpers.js';
 
 export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
@@ -70,6 +70,7 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
       description: "Retrieve a thread. Pass ?markRead=true to automatically remove the unread label from all messages.",
       inputSchema: {
         threadId: z.string().describe("The threadId"),
+        markRead: z.string().describe("Set to \"true\" to automatically remove the unread label from all messages in the thread.").optional(),
       },
       outputSchema: {
         id: z.string().describe("The id of the thread"),
@@ -89,7 +90,7 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
     async (args) => {
       try {
         const threadId = String(args.threadId);
-        const result = await nuntly.threads.retrieve(threadId);
+        const result = await nuntly.threads.retrieve(threadId, { markRead: args.markRead } as RetrieveThreadQuery);
         return formatStructuredResult(result);
       } catch (error) {
         return formatError(error);
