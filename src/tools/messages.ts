@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { Nuntly, ForwardMessageRequest, MessagesQuery, ReplyMessageRequest, UpdateMessageRequest } from '@nuntly/sdk';
+import type { Nuntly, ForwardMessageRequest, MessageContentQuery, MessagesQuery, ReplyMessageRequest, UpdateMessageRequest } from '@nuntly/sdk';
 import { formatStructuredResult, formatError } from '../helpers.js';
 
 export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
@@ -202,6 +202,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
       description: "Returns presigned URLs to download the HTML, plain-text, and raw MIME source of a received message.",
       inputSchema: {
         messageId: z.string().describe("The messageId"),
+        format: z.array(z.enum(['html', 'text', 'mime'])).describe("Content formats to retrieve. Defaults to `html` only.").optional(),
       },
       outputSchema: {
         text: z.object({ downloadUrl: z.string().describe("Presigned download URL."), size: z.number().describe("Uncompressed size in bytes."), expiresAt: z.string().describe("When the URL expires.") }).describe("Plain text content, or `null` if not requested or unavailable."),
@@ -213,7 +214,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
     async (args) => {
       try {
         const messageId = String(args.messageId);
-        const result = await nuntly.messages.content.retrieve(messageId);
+        const result = await nuntly.messages.content.retrieve(messageId, { format: args.format } as MessageContentQuery);
         return formatStructuredResult(result);
       } catch (error) {
         return formatError(error);

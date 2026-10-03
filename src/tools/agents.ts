@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import type { Nuntly, AgentMemoryRequest } from '@nuntly/sdk';
+import type { Nuntly, AgentMemoryQuery, AgentMemoryRequest } from '@nuntly/sdk';
 import { formatStructuredResult, formatError } from '../helpers.js';
 
 export function registerAgentsTools(server: McpServer, nuntly: Nuntly): void {
@@ -13,6 +13,8 @@ export function registerAgentsTools(server: McpServer, nuntly: Nuntly): void {
       description: "Retrieve the memory for an AI agent.",
       inputSchema: {
         agentId: z.string().describe("The agentId"),
+        inboxId: z.string().describe("Scope memory to a specific inbox.").optional(),
+        threadId: z.string().describe("Scope memory to a specific thread.").optional(),
       },
       outputSchema: {
         id: z.string().describe("The agent memory record id."),
@@ -29,7 +31,7 @@ export function registerAgentsTools(server: McpServer, nuntly: Nuntly): void {
     async (args) => {
       try {
         const agentId = String(args.agentId);
-        const result = await nuntly.agents.memory.retrieve(agentId);
+        const result = await nuntly.agents.memory.retrieve(agentId, { inboxId: args.inboxId, threadId: args.threadId } as AgentMemoryQuery);
         return formatStructuredResult(result);
       } catch (error) {
         return formatError(error);
