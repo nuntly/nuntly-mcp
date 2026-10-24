@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Nuntly } from '@nuntly/sdk';
-import type { ZodTypeAny } from 'zod';
+import type { AnyZodObject, ZodTypeAny } from 'zod';
 import { registerDomainsTools } from '../src/tools/domains';
 
 // Values the Nuntly API returns for domain.receivingStatus.
@@ -10,8 +10,8 @@ const API_RECEIVING_STATUSES = ['disabled', 'bootstrapping', 'pending', 'active'
 function registeredOutputSchemas(): Record<string, Record<string, ZodTypeAny>> {
   const schemas: Record<string, Record<string, ZodTypeAny>> = {};
   const server = {
-    registerTool: (name: string, config: { outputSchema: Record<string, ZodTypeAny> }) => {
-      schemas[name] = config.outputSchema;
+    registerTool: (name: string, config: { outputSchema: AnyZodObject }) => {
+      schemas[name] = config.outputSchema.shape;
     },
   } as unknown as McpServer;
   registerDomainsTools(server, {} as Nuntly);

@@ -1,6 +1,6 @@
 {
   "name": "@nuntly/sdk-mcp",
-  "version": "1.2.2",
+  "version": "2.0.0-beta.1",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -19,18 +19,21 @@
     }
   },
   "bin": {
-    "nuntly-mcp": "./bin/mcp-server.js"
+    "nuntly-mcp": "bin/mcp-server.js"
   },
   "files": [
     "dist",
     "bin"
   ],
+  "engines": {
+    "node": ">=20"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nuntly/nuntly-mcp.git"
   },
-  "homepage": "https://nuntly.com",
+  "homepage": "https://github.com/nuntly/nuntly-mcp#readme",
   "bugs": {
     "url": "https://github.com/nuntly/nuntly-mcp/issues"
   },
@@ -41,9 +44,12 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@nuntly/sdk": "^1.2.2",
-    "@modelcontextprotocol/sdk": "^1.13.0",
-    "zod": "^3.24.0"
+    "@nuntly/sdk": "2.0.0-beta.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.76"
+  },
+  "overrides": {
+    "zod": "$zod"
   },
   "devDependencies": {
     "@types/node": "~24.10.9",

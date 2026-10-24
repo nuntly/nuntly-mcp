@@ -1,25 +1,37 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { CursorPageParams, Nuntly } from '@nuntly/sdk';
 import { z } from 'zod';
-import type { Nuntly, CursorPageParams } from '@nuntly/sdk';
-import { formatStructuredResult, formatError } from '../helpers.js';
+import { formatError, formatStructuredResult } from '../helpers.js';
 
 export function registerOrganizationsTools(server: McpServer, nuntly: Nuntly): void {
-
   // GET /organizations
   server.registerTool(
     'list-organizations',
     {
-      title: "List Organizations",
-      description: "Returns all organizations the authenticated user belongs to.",
-      inputSchema: {
-        cursor: z.string().describe("Pagination cursor from a previous response").optional(),
-        limit: z.number().describe("Maximum number of items to return").optional(),
-      },
-      outputSchema: {
-        data: z.array(z.object({ id: z.string().describe("The id of the organization"), name: z.string().describe("The name of the organization"), status: z.enum(['enabled', 'disabled']).describe("The status of the organization") })),
-        nextCursor: z.string().optional(),
-      },
-      annotations: {"openWorldHint":true,"readOnlyHint":true},
+      title: 'List Organizations',
+      description:
+        'Lists the organization that the API key belongs to, with its id, name, and status. The result is paginated with a cursor like other list endpoints.',
+      inputSchema: z
+        .object({
+          cursor: z.string().describe('Pagination cursor from a previous response').optional(),
+          limit: z.number().describe('Maximum number of items to return').optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          data: z.array(
+            z
+              .object({
+                id: z.string().describe('The id of the organization'),
+                name: z.string().describe('The name of the organization'),
+                status: z.enum(['enabled', 'disabled']).or(z.string()).describe('The status of the organization'),
+              })
+              .passthrough(),
+          ),
+          nextCursor: z.string().nullable().optional(),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
       try {
@@ -35,17 +47,22 @@ export function registerOrganizationsTools(server: McpServer, nuntly: Nuntly): v
   server.registerTool(
     'retrieve-organization',
     {
-      title: "Retrieve Organization",
-      description: "Returns the organization's profile, plan, region, and account status.",
-      inputSchema: {
-        id: z.string().describe("The organization ID"),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the organization"),
-        name: z.string().describe("The name of the organization"),
-        status: z.enum(['enabled', 'disabled']).describe("The status of the organization"),
-      },
-      annotations: {"openWorldHint":true,"readOnlyHint":true},
+      title: 'Retrieve Organization',
+      description:
+        'Retrieves the organization that the API key belongs to by id, returning its name and its status (enabled or disabled).',
+      inputSchema: z
+        .object({
+          id: z.string().describe('The organization ID'),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the organization'),
+          name: z.string().describe('The name of the organization'),
+          status: z.enum(['enabled', 'disabled']).or(z.string()).describe('The status of the organization'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
       try {
@@ -62,15 +79,49 @@ export function registerOrganizationsTools(server: McpServer, nuntly: Nuntly): v
   server.registerTool(
     'retrieve-organization-usage',
     {
-      title: "Retrieve Organization Usage",
-      description: "Returns current period usage metrics (daily and monthly) for sending and receiving, against your plan limits.",
-      inputSchema: {
-        id: z.string().describe("The organizations usage ID"),
-      },
-      outputSchema: {
-        transactional: z.object({ limits: z.object({ daily: z.number(), monthly: z.number() }), usage: z.object({ daily: z.number(), monthly: z.number() }), sending: z.object({ daily: z.number(), monthly: z.number() }), receiving: z.object({ daily: z.number(), monthly: z.number() }) }),
-      },
-      annotations: {"openWorldHint":true,"readOnlyHint":true},
+      title: 'Retrieve Organization Usage',
+      description:
+        'Returns the daily and monthly email usage of the organization, with each limit, its reset time, and a breakdown by channel.',
+      inputSchema: z
+        .object({
+          id: z.string().describe('The organization ID'),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          email: z
+            .object({
+              daily: z
+                .object({
+                  used: z.number(),
+                  limit: z.number().nullable(),
+                  breakdown: z
+                    .object({
+                      transactional: z.object({ sent: z.number(), received: z.number() }).passthrough(),
+                      broadcast: z.object({ sent: z.number() }).passthrough(),
+                    })
+                    .passthrough(),
+                  resetsAt: z.string(),
+                })
+                .passthrough(),
+              monthly: z
+                .object({
+                  used: z.number(),
+                  limit: z.number().nullable(),
+                  breakdown: z
+                    .object({
+                      transactional: z.object({ sent: z.number(), received: z.number() }).passthrough(),
+                      broadcast: z.object({ sent: z.number() }).passthrough(),
+                    })
+                    .passthrough(),
+                  resetsAt: z.string().nullable(),
+                })
+                .passthrough(),
+            })
+            .passthrough(),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
       try {
