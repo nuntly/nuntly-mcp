@@ -1,36 +1,43 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { CreateInboxRequest, InboxesQuery, Nuntly, SendMessageRequest, UpdateInboxRequest } from '@nuntly/sdk';
 import { z } from 'zod';
-import type { Nuntly, CreateInboxRequest, InboxesQuery, SendMessageRequest, UpdateInboxRequest } from '@nuntly/sdk';
-import { formatStructuredResult, formatError } from '../helpers.js';
+import { formatError, formatStructuredResult } from '../helpers.js';
 
 export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
-
   // POST /inboxes
   server.registerTool(
     'create-inbox',
     {
-      title: "Create Inbox",
-      description: "Create a new inbox on a verified domain.",
-      inputSchema: {
-        domainId: z.string().describe("The id of the domain for this inbox. Defaults to your provided domain when omitted.").optional(),
-        address: z.string().describe("The local-part of the email address (before the @)."),
-        name: z.string().describe("The display name of the inbox.").optional(),
-        namespaceId: z.string().describe("The id of the namespace to assign the inbox to.").optional(),
-        agentId: z.string().describe("The external AI agent identifier.").optional(),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the inbox"),
-        createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"),
-        updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(),
-        domainId: z.string().describe("The id of the domain."),
-        domainName: z.string().describe("The domain name."),
-        address: z.string().describe("The local-part of the email address."),
-        name: z.string().describe("The display name of the inbox."),
-        namespaceId: z.string().describe("The id of the namespace."),
-        namespaceName: z.string().describe("The display name of the namespace."),
-        agentId: z.string().describe("The AI agent identifier."),
-      },
-      annotations: {"openWorldHint":true},
+      title: 'Create Inbox',
+      description:
+        'Creates an inbox address on a verified domain with receiving active, or on your provided domain if none is given. Can assign a namespace and agent id.',
+      inputSchema: z
+        .object({
+          domainId: z
+            .string()
+            .describe('The id of the domain for this inbox. Defaults to your provided domain when omitted.')
+            .optional(),
+          address: z.string().describe('The local-part of the email address (before the @).'),
+          name: z.string().describe('The display name of the inbox.').optional(),
+          namespaceId: z.string().describe('The id of the namespace to assign the inbox to.').optional(),
+          agentId: z.string().describe('The external AI agent identifier.').optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the inbox'),
+          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
+          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
+          domainId: z.string().describe('The id of the domain.'),
+          domainName: z.string().describe('The domain name.'),
+          address: z.string().describe('The local-part of the email address.'),
+          name: z.string().nullable().describe('The display name of the inbox.'),
+          namespaceId: z.string().nullable().describe('The id of the namespace.'),
+          namespaceName: z.string().nullable().describe('The display name of the namespace.'),
+          agentId: z.string().nullable().describe('The AI agent identifier.'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true },
     },
     async (args) => {
       try {
@@ -47,15 +54,20 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'delete-inbox',
     {
-      title: "Delete Inbox",
-      description: "Soft-delete an inbox.",
-      inputSchema: {
-        inboxId: z.string().describe("The inboxId"),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the resource."),
-      },
-      annotations: {"openWorldHint":true,"destructiveHint":true},
+      title: 'Delete Inbox',
+      description:
+        'Deletes an inbox so it no longer appears in lists and stops matching incoming mail. The default catch-all inbox of a domain cannot be deleted.',
+      inputSchema: z
+        .object({
+          inboxId: z.string().describe('The inboxId'),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the resource.'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, destructiveHint: true },
     },
     async (args) => {
       try {
@@ -72,22 +84,46 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'list-inboxes',
     {
-      title: "List Inboxes",
-      description: "List all inboxes.",
-      inputSchema: {
-        cursor: z.string().describe("The cursor to retrieve the next page of results").optional(),
-        limit: z.number().describe("The maximum number of results to return").optional(),
-        namespaceId: z.string().describe("Filter by namespace.").optional(),
-      },
-      outputSchema: {
-        data: z.array(z.object({ id: z.string().describe("The id of the inbox"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"), updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(), domainId: z.string().describe("The id of the domain."), domainName: z.string().describe("The domain name."), address: z.string().describe("The local-part of the email address."), name: z.string().describe("The display name of the inbox."), namespaceId: z.string().describe("The id of the namespace."), namespaceName: z.string().describe("The display name of the namespace."), agentId: z.string().describe("The AI agent identifier.") })),
-        nextCursor: z.string().optional(),
-      },
-      annotations: {"openWorldHint":true,"readOnlyHint":true},
+      title: 'List Inboxes',
+      description:
+        'Lists the active inboxes of your organization, newest first, with cursor pagination. Optionally filter the results to a single namespace.',
+      inputSchema: z
+        .object({
+          cursor: z.string().describe('The cursor to retrieve the next page of results').optional(),
+          limit: z.number().describe('The maximum number of results to return').optional(),
+          namespaceId: z.string().describe('Filter by namespace.').optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          data: z.array(
+            z
+              .object({
+                id: z.string().describe('The id of the inbox'),
+                createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
+                updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
+                domainId: z.string().describe('The id of the domain.'),
+                domainName: z.string().describe('The domain name.'),
+                address: z.string().describe('The local-part of the email address.'),
+                name: z.string().nullable().describe('The display name of the inbox.'),
+                namespaceId: z.string().nullable().describe('The id of the namespace.'),
+                namespaceName: z.string().nullable().describe('The display name of the namespace.'),
+                agentId: z.string().nullable().describe('The AI agent identifier.'),
+              })
+              .passthrough(),
+          ),
+          nextCursor: z.string().nullable().optional(),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
       try {
-        const page = await nuntly.inboxes.list({ cursor: args.cursor, limit: args.limit, namespaceId: args.namespaceId } as InboxesQuery);
+        const page = await nuntly.inboxes.list({
+          cursor: args.cursor,
+          limit: args.limit,
+          namespaceId: args.namespaceId,
+        } as InboxesQuery);
         return formatStructuredResult({ data: page.data, nextCursor: page.nextCursor });
       } catch (error) {
         return formatError(error);
@@ -99,24 +135,29 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-inbox',
     {
-      title: "Retrieve Inbox",
-      description: "Retrieve an inbox.",
-      inputSchema: {
-        inboxId: z.string().describe("The inboxId"),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the inbox"),
-        createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"),
-        updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(),
-        domainId: z.string().describe("The id of the domain."),
-        domainName: z.string().describe("The domain name."),
-        address: z.string().describe("The local-part of the email address."),
-        name: z.string().describe("The display name of the inbox."),
-        namespaceId: z.string().describe("The id of the namespace."),
-        namespaceName: z.string().describe("The display name of the namespace."),
-        agentId: z.string().describe("The AI agent identifier."),
-      },
-      annotations: {"openWorldHint":true,"readOnlyHint":true},
+      title: 'Retrieve Inbox',
+      description:
+        'Retrieves an inbox by id, including its address, domain, display name, namespace, and assigned agent id. Deleted inboxes return a not found error.',
+      inputSchema: z
+        .object({
+          inboxId: z.string().describe('The inboxId'),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the inbox'),
+          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
+          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
+          domainId: z.string().describe('The id of the domain.'),
+          domainName: z.string().describe('The domain name.'),
+          address: z.string().describe('The local-part of the email address.'),
+          name: z.string().nullable().describe('The display name of the inbox.'),
+          namespaceId: z.string().nullable().describe('The id of the namespace.'),
+          namespaceName: z.string().nullable().describe('The display name of the namespace.'),
+          agentId: z.string().nullable().describe('The AI agent identifier.'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
       try {
@@ -133,24 +174,29 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'send-inbox-message',
     {
-      title: "Send Inbox Message",
-      description: "Send a new message from an inbox.",
-      inputSchema: {
-        inboxId: z.string().describe("The inboxId"),
-        to: z.array(z.string()).describe("The recipient addresses."),
-        cc: z.array(z.string()).describe("The CC addresses.").optional(),
-        bcc: z.array(z.string()).describe("The BCC addresses.").optional(),
-        subject: z.string().describe("The message subject."),
-        text: z.string().describe("The plain text body.").optional(),
-        html: z.string().describe("The HTML body.").optional(),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the message"),
-        threadId: z.string().describe("The id of the thread."),
-        messageId: z.string().describe("The RFC 5322 Message-ID header."),
-        subject: z.string().describe("The subject of the message."),
-      },
-      annotations: {"openWorldHint":true},
+      title: 'Send Inbox Message',
+      description:
+        'Sends a new email from an inbox to one or more recipients. The message is queued for delivery and the response returns its id, thread id, and Message-ID.',
+      inputSchema: z
+        .object({
+          inboxId: z.string().describe('The inboxId'),
+          to: z.array(z.string()).describe('The recipient addresses.'),
+          cc: z.array(z.string()).describe('The CC addresses.').optional(),
+          bcc: z.array(z.string()).describe('The BCC addresses.').optional(),
+          subject: z.string().describe('The message subject.'),
+          text: z.string().describe('The plain text body.').optional(),
+          html: z.string().describe('The HTML body.').optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the message'),
+          threadId: z.string().describe('The id of the thread.'),
+          messageId: z.string().describe('The RFC 5322 Message-ID header.'),
+          subject: z.string().describe('The subject of the message.'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true },
     },
     async (args) => {
       try {
@@ -168,16 +214,21 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'update-inbox',
     {
-      title: "Update Inbox",
-      description: "Update an inbox.",
-      inputSchema: {
-        inboxId: z.string().describe("The inboxId"),
-        name: z.string().describe("The display name of the inbox.").optional(),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the resource."),
-      },
-      annotations: {"openWorldHint":true},
+      title: 'Update Inbox',
+      description:
+        'Updates the display name of an inbox, used as the sender name on messages it sends. Set the name to null to clear it. Returns the inbox id.',
+      inputSchema: z
+        .object({
+          inboxId: z.string().describe('The inboxId'),
+          name: z.string().nullable().describe('The display name of the inbox.').optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the resource.'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true },
     },
     async (args) => {
       try {

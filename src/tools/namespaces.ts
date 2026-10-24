@@ -1,28 +1,38 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type {
+  CreateNamespaceRequest,
+  NamespaceInboxesQuery,
+  NamespacesQuery,
+  Nuntly,
+  UpdateNamespaceRequest,
+} from '@nuntly/sdk';
 import { z } from 'zod';
-import type { Nuntly, CreateNamespaceRequest, NamespaceInboxesQuery, NamespacesQuery, UpdateNamespaceRequest } from '@nuntly/sdk';
-import { formatStructuredResult, formatError } from '../helpers.js';
+import { formatError, formatStructuredResult } from '../helpers.js';
 
 export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void {
-
   // POST /namespaces
   server.registerTool(
     'create-namespace',
     {
-      title: "Create Namespace",
-      description: "Create a new namespace.",
-      inputSchema: {
-        name: z.string().describe("The display name of the namespace."),
-        externalId: z.string().describe("An optional external identifier for the namespace.").optional(),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the namespace"),
-        createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"),
-        updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(),
-        name: z.string().describe("The display name of the namespace."),
-        externalId: z.string().describe("The external identifier for the namespace."),
-      },
-      annotations: {"openWorldHint":true},
+      title: 'Create Namespace',
+      description:
+        'Creates a namespace to group inboxes, with a display name and an optional external id that maps it to a customer or tenant in your own system.',
+      inputSchema: z
+        .object({
+          name: z.string().describe('The display name of the namespace.'),
+          externalId: z.string().describe('An optional external identifier for the namespace.').optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the namespace'),
+          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
+          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
+          name: z.string().describe('The display name of the namespace.'),
+          externalId: z.string().nullable().describe('The external identifier for the namespace.'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true },
     },
     async (args) => {
       try {
@@ -39,15 +49,20 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
   server.registerTool(
     'delete-namespace',
     {
-      title: "Delete Namespace",
-      description: "Soft-delete a namespace. Rejects if it has active inboxes.",
-      inputSchema: {
-        namespaceId: z.string().describe("The namespaceId"),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the resource."),
-      },
-      annotations: {"openWorldHint":true,"destructiveHint":true},
+      title: 'Delete Namespace',
+      description:
+        'Deletes a namespace by id. The request is rejected with a validation error while the namespace still has active inboxes, so delete them first.',
+      inputSchema: z
+        .object({
+          namespaceId: z.string().describe('The namespaceId'),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the resource.'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, destructiveHint: true },
     },
     async (args) => {
       try {
@@ -64,23 +79,46 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
   server.registerTool(
     'list-namespace-inboxes',
     {
-      title: "List Namespace Inboxes",
-      description: "List inboxes in a namespace.",
-      inputSchema: {
-        namespaceId: z.string().describe("The namespaceId"),
-        cursor: z.string().describe("The cursor to retrieve the next page of results").optional(),
-        limit: z.number().describe("The maximum number of results to return").optional(),
-      },
-      outputSchema: {
-        data: z.array(z.object({ id: z.string().describe("The id of the inbox"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"), updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(), domainId: z.string().describe("The id of the domain."), domainName: z.string().describe("The domain name."), address: z.string().describe("The local-part of the email address."), name: z.string().describe("The display name of the inbox."), namespaceId: z.string().describe("The id of the namespace."), namespaceName: z.string().describe("The display name of the namespace."), agentId: z.string().describe("The AI agent identifier.") })),
-        nextCursor: z.string().optional(),
-      },
-      annotations: {"openWorldHint":true,"readOnlyHint":true},
+      title: 'List Namespace Inboxes',
+      description:
+        'Lists the active inboxes assigned to a namespace, newest first, with cursor pagination. Returns the same inbox objects as the inbox list.',
+      inputSchema: z
+        .object({
+          namespaceId: z.string().describe('The namespaceId'),
+          cursor: z.string().describe('The cursor to retrieve the next page of results').optional(),
+          limit: z.number().describe('The maximum number of results to return').optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          data: z.array(
+            z
+              .object({
+                id: z.string().describe('The id of the inbox'),
+                createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
+                updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
+                domainId: z.string().describe('The id of the domain.'),
+                domainName: z.string().describe('The domain name.'),
+                address: z.string().describe('The local-part of the email address.'),
+                name: z.string().nullable().describe('The display name of the inbox.'),
+                namespaceId: z.string().nullable().describe('The id of the namespace.'),
+                namespaceName: z.string().nullable().describe('The display name of the namespace.'),
+                agentId: z.string().nullable().describe('The AI agent identifier.'),
+              })
+              .passthrough(),
+          ),
+          nextCursor: z.string().nullable().optional(),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
       try {
         const namespaceId = String(args.namespaceId);
-        const page = await nuntly.namespaces.inboxes.list(namespaceId, { cursor: args.cursor, limit: args.limit } as NamespaceInboxesQuery);
+        const page = await nuntly.namespaces.inboxes.list(namespaceId, {
+          cursor: args.cursor,
+          limit: args.limit,
+        } as NamespaceInboxesQuery);
         return formatStructuredResult({ data: page.data, nextCursor: page.nextCursor });
       } catch (error) {
         return formatError(error);
@@ -92,17 +130,32 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
   server.registerTool(
     'list-namespaces',
     {
-      title: "List Namespaces",
-      description: "List all namespaces.",
-      inputSchema: {
-        cursor: z.string().describe("The cursor to retrieve the next page of results").optional(),
-        limit: z.number().describe("The maximum number of results to return").optional(),
-      },
-      outputSchema: {
-        data: z.array(z.object({ id: z.string().describe("The id of the namespace"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"), updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(), name: z.string().describe("The display name of the namespace."), externalId: z.string().describe("The external identifier for the namespace.") })),
-        nextCursor: z.string().optional(),
-      },
-      annotations: {"openWorldHint":true,"readOnlyHint":true},
+      title: 'List Namespaces',
+      description:
+        'Lists the namespaces of your organization, newest first, with cursor pagination. Each item includes the name and the optional external id.',
+      inputSchema: z
+        .object({
+          cursor: z.string().describe('The cursor to retrieve the next page of results').optional(),
+          limit: z.number().describe('The maximum number of results to return').optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          data: z.array(
+            z
+              .object({
+                id: z.string().describe('The id of the namespace'),
+                createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
+                updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
+                name: z.string().describe('The display name of the namespace.'),
+                externalId: z.string().nullable().describe('The external identifier for the namespace.'),
+              })
+              .passthrough(),
+          ),
+          nextCursor: z.string().nullable().optional(),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
       try {
@@ -118,21 +171,26 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
   server.registerTool(
     'retrieve-namespace',
     {
-      title: "Retrieve Namespace",
-      description: "Retrieve a namespace with inbox stats.",
-      inputSchema: {
-        namespaceId: z.string().describe("The namespaceId"),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the namespace"),
-        createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"),
-        updatedAt: z.string().describe("Date at which the object was updated (ISO 8601 format)").optional(),
-        name: z.string().describe("The display name of the namespace."),
-        externalId: z.string().describe("The external identifier for the namespace."),
-        inboxCount: z.number().describe("The total number of inboxes in this namespace."),
-        activeInboxCount: z.number().describe("The number of active inboxes in this namespace."),
-      },
-      annotations: {"openWorldHint":true,"readOnlyHint":true},
+      title: 'Retrieve Namespace',
+      description:
+        'Retrieves a namespace by id with its name, its optional external id, and inbox counts, including how many of its inboxes are currently active.',
+      inputSchema: z
+        .object({
+          namespaceId: z.string().describe('The namespaceId'),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the namespace'),
+          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
+          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
+          name: z.string().describe('The display name of the namespace.'),
+          externalId: z.string().nullable().describe('The external identifier for the namespace.'),
+          inboxCount: z.number().describe('The total number of inboxes in this namespace.'),
+          activeInboxCount: z.number().describe('The number of active inboxes in this namespace.'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
       try {
@@ -149,17 +207,22 @@ export function registerNamespacesTools(server: McpServer, nuntly: Nuntly): void
   server.registerTool(
     'update-namespace',
     {
-      title: "Update Namespace",
-      description: "Update a namespace.",
-      inputSchema: {
-        namespaceId: z.string().describe("The namespaceId"),
-        name: z.string().describe("The display name of the namespace.").optional(),
-        externalId: z.string().describe("An optional external identifier for the namespace.").optional(),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the resource."),
-      },
-      annotations: {"openWorldHint":true},
+      title: 'Update Namespace',
+      description:
+        'Updates the display name or external id of a namespace. Set the external id to null to clear it. Returns the id of the updated namespace.',
+      inputSchema: z
+        .object({
+          namespaceId: z.string().describe('The namespaceId'),
+          name: z.string().describe('The display name of the namespace.').optional(),
+          externalId: z.string().nullable().describe('An optional external identifier for the namespace.').optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the resource.'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true },
     },
     async (args) => {
       try {

@@ -1,3 +1,7 @@
+export function formatResult(data: unknown) {
+  return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] };
+}
+
 /**
  * Builds a CallToolResult with both a textual `content` block (for MCP
  * clients that don't validate against `outputSchema`) and a

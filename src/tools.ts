@@ -1,27 +1,43 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Nuntly } from '@nuntly/sdk';
 import { registerAgentsTools } from './tools/agents.js';
 import { registerApiKeysTools } from './tools/api-keys.js';
+import { registerBroadcastsTools } from './tools/broadcasts.js';
+import { registerContactPropertiesTools } from './tools/contact-properties.js';
+import { registerContactsTools } from './tools/contacts.js';
 import { registerDomainsTools } from './tools/domains.js';
 import { registerEmailsTools } from './tools/emails.js';
 import { registerInboxesTools } from './tools/inboxes.js';
 import { registerMessagesTools } from './tools/messages.js';
 import { registerNamespacesTools } from './tools/namespaces.js';
 import { registerOrganizationsTools } from './tools/organizations.js';
+import { registerSegmentMembershipsTools } from './tools/segment-memberships.js';
+import { registerSegmentsTools } from './tools/segments.js';
+import { registerTemplatesTools } from './tools/templates.js';
 import { registerThreadsTools } from './tools/threads.js';
+import { registerTopicMembershipsTools } from './tools/topic-memberships.js';
+import { registerTopicsTools } from './tools/topics.js';
 import { registerWebhooksTools } from './tools/webhooks.js';
 import { registerWebhooksEventsTools } from './tools/webhooks-events.js';
 
 export function registerTools(server: McpServer, nuntly: Nuntly): void {
   registerAgentsTools(server, nuntly);
   registerApiKeysTools(server, nuntly);
+  registerBroadcastsTools(server, nuntly);
+  registerContactPropertiesTools(server, nuntly);
+  registerContactsTools(server, nuntly);
   registerDomainsTools(server, nuntly);
   registerEmailsTools(server, nuntly);
   registerInboxesTools(server, nuntly);
   registerMessagesTools(server, nuntly);
   registerNamespacesTools(server, nuntly);
   registerOrganizationsTools(server, nuntly);
+  registerSegmentMembershipsTools(server, nuntly);
+  registerSegmentsTools(server, nuntly);
+  registerTemplatesTools(server, nuntly);
   registerThreadsTools(server, nuntly);
+  registerTopicMembershipsTools(server, nuntly);
+  registerTopicsTools(server, nuntly);
   registerWebhooksTools(server, nuntly);
   registerWebhooksEventsTools(server, nuntly);
 }

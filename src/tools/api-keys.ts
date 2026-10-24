@@ -1,30 +1,37 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { CreateApiKeyRequest, CursorPageParams, Nuntly, UpdateApiKeyRequest } from '@nuntly/sdk';
 import { z } from 'zod';
-import type { Nuntly, CreateApiKeyRequest, CursorPageParams, UpdateApiKeyRequest } from '@nuntly/sdk';
-import { formatStructuredResult, formatError } from '../helpers.js';
+import { formatError, formatStructuredResult } from '../helpers.js';
 
 export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
-
   // POST /api-keys
   server.registerTool(
     'create-api-key',
     {
-      title: "Create Api Key",
-      description: "Generate a new API key. The key value is only returned once. Store it securely.",
-      inputSchema: {
-        name: z.string().describe("The name of the api key").optional(),
-        status: z.enum(['enabled', 'disabled', 'revoked']).describe("The status for the api key").optional(),
-        permission: z.enum(['fullAccess', 'sendingAccess']).describe("The permission type for the api key"),
-        domainIds: z.array(z.string()).describe("The domain ids to restrict the api key to (only for sendingAccess)").optional(),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the api key"),
-        name: z.string().describe("The name of the api key").optional(),
-        apiKey: z.string().describe("The content of the api key"),
-        shortToken: z.string().describe("The last 6 characters of the api key token"),
-        status: z.enum(['enabled', 'disabled', 'revoked']).describe("The status for the api key"),
-      },
-      annotations: {"openWorldHint":true},
+      title: 'Create Api Key',
+      description:
+        'Creates an API key with full access or send-only access, optionally limited to chosen domains. The secret key value is returned only in this response.',
+      inputSchema: z
+        .object({
+          name: z.string().describe('The name of the api key').optional(),
+          status: z.enum(['enabled', 'disabled', 'revoked']).describe('The status for the api key').optional(),
+          permission: z.enum(['fullAccess', 'sendingAccess']).describe('The permission type for the api key'),
+          domainIds: z
+            .array(z.string())
+            .describe('The domain ids to restrict the api key to (only for sendingAccess)')
+            .optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the api key'),
+          name: z.string().describe('The name of the api key').optional(),
+          apiKey: z.string().describe('The content of the api key'),
+          shortToken: z.string().describe('The last 6 characters of the api key token'),
+          status: z.enum(['enabled', 'disabled', 'revoked']).or(z.string()).describe('The status for the api key'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true },
     },
     async (args) => {
       try {
@@ -41,15 +48,20 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'delete-api-key',
     {
-      title: "Delete Api Key",
-      description: "Revoke an API key. Requests authenticating with this key will be rejected immediately.",
-      inputSchema: {
-        id: z.string().describe("The api key ID"),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the api key"),
-      },
-      annotations: {"openWorldHint":true,"destructiveHint":true},
+      title: 'Delete Api Key',
+      description:
+        'Permanently deletes an API key. Any request that authenticates with this key is rejected from then on. This cannot be undone.',
+      inputSchema: z
+        .object({
+          id: z.string().describe('The api key ID'),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the api key'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, destructiveHint: true },
     },
     async (args) => {
       try {
@@ -66,17 +78,35 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'list-api-keys',
     {
-      title: "List Api Keys",
-      description: "Returns all API keys for the organization. Key values are never included in list responses.",
-      inputSchema: {
-        cursor: z.string().describe("Pagination cursor from a previous response").optional(),
-        limit: z.number().describe("Maximum number of items to return").optional(),
-      },
-      outputSchema: {
-        data: z.array(z.object({ id: z.string().describe("The id of the api key"), name: z.string().describe("The name of the api key").optional(), shortToken: z.string().describe("The last 6 characters of the api key token"), status: z.enum(['enabled', 'disabled', 'revoked']).describe("The status for the api key"), createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)") })),
-        nextCursor: z.string().optional(),
-      },
-      annotations: {"openWorldHint":true,"readOnlyHint":true},
+      title: 'List Api Keys',
+      description:
+        'Lists the API keys of your organization, newest first, with cursor pagination. Each key shows its name, status, creation date, and a short token hint.',
+      inputSchema: z
+        .object({
+          cursor: z.string().describe('Pagination cursor from a previous response').optional(),
+          limit: z.number().describe('Maximum number of items to return').optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          data: z.array(
+            z
+              .object({
+                id: z.string().describe('The id of the api key'),
+                name: z.string().describe('The name of the api key').optional(),
+                shortToken: z.string().describe('The last 6 characters of the api key token'),
+                status: z
+                  .enum(['enabled', 'disabled', 'revoked'])
+                  .or(z.string())
+                  .describe('The status for the api key'),
+                createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
+              })
+              .passthrough(),
+          ),
+          nextCursor: z.string().nullable().optional(),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
       try {
@@ -92,19 +122,24 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'retrieve-api-key',
     {
-      title: "Retrieve Api Key",
-      description: "Returns API key metadata. The key value is never returned after creation.",
-      inputSchema: {
-        id: z.string().describe("The api key ID"),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the api key"),
-        name: z.string().describe("The name of the api key").optional(),
-        shortToken: z.string().describe("The last 6 characters of the api key token"),
-        status: z.enum(['enabled', 'disabled', 'revoked']).describe("The status for the api key"),
-        createdAt: z.string().describe("Date at which the object was created (ISO 8601 format)"),
-      },
-      annotations: {"openWorldHint":true,"readOnlyHint":true},
+      title: 'Retrieve Api Key',
+      description:
+        'Retrieves an API key by id with its name, status, creation date, and a short token hint. The full secret key value is never returned after creation.',
+      inputSchema: z
+        .object({
+          id: z.string().describe('The api key ID'),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the api key'),
+          name: z.string().describe('The name of the api key').optional(),
+          shortToken: z.string().describe('The last 6 characters of the api key token'),
+          status: z.enum(['enabled', 'disabled', 'revoked']).or(z.string()).describe('The status for the api key'),
+          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
       try {
@@ -121,19 +156,30 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   server.registerTool(
     'update-api-key',
     {
-      title: "Update Api Key",
-      description: "Update the key name, permissions, or restrict it to specific sending domains.",
-      inputSchema: {
-        id: z.string().describe("The api key ID"),
-        name: z.string().describe("The name of the api key").optional(),
-        status: z.enum(['enabled', 'disabled']).optional(),
-        permission: z.enum(['fullAccess', 'sendingAccess']).describe("The permission type for the api key").optional(),
-        domainIds: z.array(z.string()).describe("The domain ids to restrict the api key to (only for sendingAccess)").optional(),
-      },
-      outputSchema: {
-        id: z.string().describe("The id of the api key"),
-      },
-      annotations: {"openWorldHint":true},
+      title: 'Update Api Key',
+      description:
+        'Updates the name of an API key, enables or disables it, or changes its access level and domain restrictions. Returns the id of the updated key.',
+      inputSchema: z
+        .object({
+          id: z.string().describe('The api key ID'),
+          name: z.string().describe('The name of the api key').optional(),
+          status: z.enum(['enabled', 'disabled']).optional(),
+          permission: z
+            .enum(['fullAccess', 'sendingAccess'])
+            .describe('The permission type for the api key')
+            .optional(),
+          domainIds: z
+            .array(z.string())
+            .describe('The domain ids to restrict the api key to (only for sendingAccess)')
+            .optional(),
+        })
+        .strict(),
+      outputSchema: z
+        .object({
+          id: z.string().describe('The id of the api key'),
+        })
+        .passthrough(),
+      annotations: { openWorldHint: true },
     },
     async (args) => {
       try {
