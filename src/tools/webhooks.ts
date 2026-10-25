@@ -2,6 +2,13 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CreateWebhookRequest, CursorPageParams, Nuntly, UpdateWebhookRequest } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import {
+  eventTypeOutput,
+  webhookDisabledReasonOutput,
+  webhookEventTypeInput,
+  webhookMutableStatusInput,
+  webhookStatusOutput,
+} from '../schemas.js';
 
 export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
   // POST /webhooks
@@ -15,27 +22,8 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
         .object({
           name: z.string().describe('The name of the webhook').optional(),
           endpointUrl: z.string().describe('The endpoint URL of the webhook'),
-          status: z.enum(['enabled', 'disabled']).describe('The status of the webhook.').optional(),
-          events: z
-            .array(
-              z.enum([
-                'email.sent',
-                'email.delivered',
-                'email.opened',
-                'email.clicked',
-                'email.bounced',
-                'email.complained',
-                'email.rejected',
-                'email.deliveryDelayed',
-                'email.failed',
-                'message.received',
-                'message.security.flagged',
-                'message.agent.triggered',
-                'message.sent',
-                'message.rejected',
-              ]),
-            )
-            .describe('The event types to subscribe to'),
+          status: webhookMutableStatusInput().describe('The status of the webhook.').optional(),
+          events: z.array(webhookEventTypeInput()).describe('The event types to subscribe to'),
         })
         .strict(),
       outputSchema: z
@@ -43,45 +31,15 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
           id: z.string().describe('The id of the webhook'),
           name: z.string().describe('The name of the webhook').optional(),
           endpointUrl: z.string().describe('The endpoint URL of the webhook'),
-          status: z.enum(['enabled', 'disabled', 'revoked']).or(z.string()).describe('The status of the webhook.'),
-          disabledReason: z
-            .enum(['manual', 'auto_consecutive_failures'])
-            .or(z.string())
+          status: webhookStatusOutput().describe('The status of the webhook.'),
+          disabledReason: webhookDisabledReasonOutput()
             .nullable()
             .describe('The reason the webhook was disabled, or `null` if it is not disabled.'),
           disabledAt: z
             .string()
             .nullable()
             .describe('The timestamp when the webhook was disabled, or `null` if it is not disabled.'),
-          events: z
-            .array(
-              z
-                .enum([
-                  'email.queued',
-                  'email.scheduled',
-                  'email.processed',
-                  'email.sending',
-                  'email.sent',
-                  'email.delivered',
-                  'email.opened',
-                  'email.clicked',
-                  'email.bounced',
-                  'email.complained',
-                  'email.rejected',
-                  'email.deliveryDelayed',
-                  'email.failed',
-                  'email.renderingFailed',
-                  'email.subscribed',
-                  'email.unsubscribed',
-                  'message.received',
-                  'message.security.flagged',
-                  'message.agent.triggered',
-                  'message.sent',
-                  'message.rejected',
-                ])
-                .or(z.string()),
-            )
-            .describe('The event types to subscribe to'),
+          events: z.array(eventTypeOutput()).describe('The event types to subscribe to'),
           signingSecret: z.string().describe('The signing secret of the webhook.'),
           createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
         })
@@ -139,7 +97,13 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
       inputSchema: z
         .object({
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
@@ -150,48 +114,15 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
                 id: z.string().describe('The id of the webhook'),
                 name: z.string().describe('The name of the webhook').optional(),
                 endpointUrl: z.string().describe('The endpoint URL of the webhook'),
-                status: z
-                  .enum(['enabled', 'disabled', 'revoked'])
-                  .or(z.string())
-                  .describe('The status of the webhook.'),
-                disabledReason: z
-                  .enum(['manual', 'auto_consecutive_failures'])
-                  .or(z.string())
+                status: webhookStatusOutput().describe('The status of the webhook.'),
+                disabledReason: webhookDisabledReasonOutput()
                   .nullable()
                   .describe('The reason the webhook was disabled, or `null` if it is not disabled.'),
                 disabledAt: z
                   .string()
                   .nullable()
                   .describe('The timestamp when the webhook was disabled, or `null` if it is not disabled.'),
-                events: z
-                  .array(
-                    z
-                      .enum([
-                        'email.queued',
-                        'email.scheduled',
-                        'email.processed',
-                        'email.sending',
-                        'email.sent',
-                        'email.delivered',
-                        'email.opened',
-                        'email.clicked',
-                        'email.bounced',
-                        'email.complained',
-                        'email.rejected',
-                        'email.deliveryDelayed',
-                        'email.failed',
-                        'email.renderingFailed',
-                        'email.subscribed',
-                        'email.unsubscribed',
-                        'message.received',
-                        'message.security.flagged',
-                        'message.agent.triggered',
-                        'message.sent',
-                        'message.rejected',
-                      ])
-                      .or(z.string()),
-                  )
-                  .describe('The event types to subscribe to'),
+                events: z.array(eventTypeOutput()).describe('The event types to subscribe to'),
                 createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
               })
               .passthrough(),
@@ -228,39 +159,9 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
           id: z.string().describe('The id of the webhook'),
           name: z.string().describe('The name of the webhook').optional(),
           endpointUrl: z.string().describe('The endpoint URL of the webhook'),
-          events: z
-            .array(
-              z
-                .enum([
-                  'email.queued',
-                  'email.scheduled',
-                  'email.processed',
-                  'email.sending',
-                  'email.sent',
-                  'email.delivered',
-                  'email.opened',
-                  'email.clicked',
-                  'email.bounced',
-                  'email.complained',
-                  'email.rejected',
-                  'email.deliveryDelayed',
-                  'email.failed',
-                  'email.renderingFailed',
-                  'email.subscribed',
-                  'email.unsubscribed',
-                  'message.received',
-                  'message.security.flagged',
-                  'message.agent.triggered',
-                  'message.sent',
-                  'message.rejected',
-                ])
-                .or(z.string()),
-            )
-            .describe('The event types to subscribe to'),
-          status: z.enum(['enabled', 'disabled', 'revoked']).or(z.string()).describe('The status of the webhook.'),
-          disabledReason: z
-            .enum(['manual', 'auto_consecutive_failures'])
-            .or(z.string())
+          events: z.array(eventTypeOutput()).describe('The event types to subscribe to'),
+          status: webhookStatusOutput().describe('The status of the webhook.'),
+          disabledReason: webhookDisabledReasonOutput()
             .nullable()
             .describe('The reason the webhook was disabled, or `null` if it is not disabled.'),
           disabledAt: z
@@ -295,28 +196,8 @@ export function registerWebhooksTools(server: McpServer, nuntly: Nuntly): void {
           id: z.string().describe('The webhook ID'),
           name: z.string().describe('The name of the webhook').optional(),
           endpointUrl: z.string().describe('The endpoint URL of the webhook').optional(),
-          events: z
-            .array(
-              z.enum([
-                'email.sent',
-                'email.delivered',
-                'email.opened',
-                'email.clicked',
-                'email.bounced',
-                'email.complained',
-                'email.rejected',
-                'email.deliveryDelayed',
-                'email.failed',
-                'message.received',
-                'message.security.flagged',
-                'message.agent.triggered',
-                'message.sent',
-                'message.rejected',
-              ]),
-            )
-            .describe('The event types to subscribe to')
-            .optional(),
-          status: z.enum(['enabled', 'disabled']).describe('The status of the webhook.').optional(),
+          events: z.array(webhookEventTypeInput()).describe('The event types to subscribe to').optional(),
+          status: webhookMutableStatusInput().describe('The status of the webhook.').optional(),
           rotateSecret: z.boolean().describe('If true, a new signing secret will be generated').optional(),
         })
         .strict(),

@@ -19,4 +19,11 @@ describe('MCP tool annotations', () => {
     expect(annotations.get('retrieve-thread')?.readOnlyHint).toBeUndefined();
     expect(annotations.get('retrieve-message')?.readOnlyHint).toBe(true);
   });
+
+  it('announces retrieve-thread as non-destructive and idempotent', async () => {
+    const annotations = await listTools();
+
+    expect(annotations.get('retrieve-thread')?.destructiveHint).toBe(false);
+    expect(annotations.get('retrieve-thread')?.idempotentHint).toBe(true);
+  });
 });

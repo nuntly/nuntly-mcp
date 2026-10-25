@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CreateInboxRequest, InboxesQuery, Nuntly, SendMessageRequest, UpdateInboxRequest } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { idResponseOutput, inboxResponseOutput, sendMessageResponseOutput } from '../schemas.js';
 
 export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
   // POST /inboxes
@@ -23,20 +24,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
           agentId: z.string().describe('The external AI agent identifier.').optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the inbox'),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
-          domainId: z.string().describe('The id of the domain.'),
-          domainName: z.string().describe('The domain name.'),
-          address: z.string().describe('The local-part of the email address.'),
-          name: z.string().nullable().describe('The display name of the inbox.'),
-          namespaceId: z.string().nullable().describe('The id of the namespace.'),
-          namespaceName: z.string().nullable().describe('The display name of the namespace.'),
-          agentId: z.string().nullable().describe('The AI agent identifier.'),
-        })
-        .passthrough(),
+      outputSchema: inboxResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
@@ -62,11 +50,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
           inboxId: z.string().describe('The inboxId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true, destructiveHint: true },
     },
     async (args) => {
@@ -90,28 +74,19 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
       inputSchema: z
         .object({
           cursor: z.string().describe('The cursor to retrieve the next page of results').optional(),
-          limit: z.number().describe('The maximum number of results to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
           namespaceId: z.string().describe('Filter by namespace.').optional(),
         })
         .strict(),
       outputSchema: z
         .object({
-          data: z.array(
-            z
-              .object({
-                id: z.string().describe('The id of the inbox'),
-                createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-                updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
-                domainId: z.string().describe('The id of the domain.'),
-                domainName: z.string().describe('The domain name.'),
-                address: z.string().describe('The local-part of the email address.'),
-                name: z.string().nullable().describe('The display name of the inbox.'),
-                namespaceId: z.string().nullable().describe('The id of the namespace.'),
-                namespaceName: z.string().nullable().describe('The display name of the namespace.'),
-                agentId: z.string().nullable().describe('The AI agent identifier.'),
-              })
-              .passthrough(),
-          ),
+          data: z.array(inboxResponseOutput()),
           nextCursor: z.string().nullable().optional(),
         })
         .passthrough(),
@@ -143,20 +118,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
           inboxId: z.string().describe('The inboxId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the inbox'),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
-          domainId: z.string().describe('The id of the domain.'),
-          domainName: z.string().describe('The domain name.'),
-          address: z.string().describe('The local-part of the email address.'),
-          name: z.string().nullable().describe('The display name of the inbox.'),
-          namespaceId: z.string().nullable().describe('The id of the namespace.'),
-          namespaceName: z.string().nullable().describe('The display name of the namespace.'),
-          agentId: z.string().nullable().describe('The AI agent identifier.'),
-        })
-        .passthrough(),
+      outputSchema: inboxResponseOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
@@ -188,14 +150,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
           html: z.string().describe('The HTML body.').optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the message'),
-          threadId: z.string().describe('The id of the thread.'),
-          messageId: z.string().describe('The RFC 5322 Message-ID header.'),
-          subject: z.string().describe('The subject of the message.'),
-        })
-        .passthrough(),
+      outputSchema: sendMessageResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
@@ -223,11 +178,7 @@ export function registerInboxesTools(server: McpServer, nuntly: Nuntly): void {
           name: z.string().nullable().describe('The display name of the inbox.').optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {

@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CursorPageParams, Nuntly } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { contactSegmentMembershipResponseOutput } from '../schemas.js';
 
 export function registerSegmentMembershipsTools(server: McpServer, nuntly: Nuntly): void {
   // POST /contacts/{contactId}/segments/{segmentId}
@@ -16,13 +17,7 @@ export function registerSegmentMembershipsTools(server: McpServer, nuntly: Nuntl
           segmentId: z.string().describe('The segmentId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          contactId: z.string().describe('The id of the contact.'),
-          segmentId: z.string().describe('The id of the segment.'),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-        })
-        .passthrough(),
+      outputSchema: contactSegmentMembershipResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
@@ -83,7 +78,13 @@ export function registerSegmentMembershipsTools(server: McpServer, nuntly: Nuntl
         .object({
           segmentId: z.string().describe('The segmentId'),
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
@@ -161,13 +162,7 @@ export function registerSegmentMembershipsTools(server: McpServer, nuntly: Nuntl
           segmentId: z.string().describe('The segmentId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          contactId: z.string().describe('The id of the contact.'),
-          segmentId: z.string().describe('The id of the segment.'),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-        })
-        .passthrough(),
+      outputSchema: contactSegmentMembershipResponseOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {

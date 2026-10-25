@@ -9,6 +9,12 @@ import type {
 } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import {
+  attachmentResponseOutput,
+  idResponseOutput,
+  messageContentItemOutput,
+  sendMessageResponseOutput,
+} from '../schemas.js';
 
 export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
   // POST /messages/{messageId}/forward
@@ -25,14 +31,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
           text: z.string().describe('An optional comment to prepend.').optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the message'),
-          threadId: z.string().describe('The id of the thread.'),
-          messageId: z.string().describe('The RFC 5322 Message-ID header.'),
-          subject: z.string().describe('The subject of the message.'),
-        })
-        .passthrough(),
+      outputSchema: sendMessageResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
@@ -61,22 +60,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
         .strict(),
       outputSchema: z
         .object({
-          data: z.array(
-            z
-              .object({
-                id: z.string().describe('The id of the attachment'),
-                filename: z.string().nullable().describe('The original filename.'),
-                contentType: z.string().describe('The MIME content type.'),
-                size: z.number().describe('The size in bytes.'),
-                contentDisposition: z.string().nullable().describe('The content disposition (inline or attachment).'),
-                contentId: z.string().nullable().describe('The CID for inline images.'),
-                downloadUrl: z
-                  .string()
-                  .describe('Presigned download URL (included when retrieving a single attachment).')
-                  .optional(),
-              })
-              .passthrough(),
-          ),
+          data: z.array(attachmentResponseOutput()),
         })
         .passthrough(),
       annotations: { openWorldHint: true, readOnlyHint: true },
@@ -102,7 +86,13 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
       inputSchema: z
         .object({
           cursor: z.string().describe('The cursor to retrieve the next page of results').optional(),
-          limit: z.number().describe('The maximum number of results to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
           domainId: z.string().describe('Filter by domain.').optional(),
           from: z.string().describe('Filter by sender address.').optional(),
         })
@@ -175,14 +165,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
           replyAll: z.boolean().describe('Whether to reply to all recipients.'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the message'),
-          threadId: z.string().describe('The id of the thread.'),
-          messageId: z.string().describe('The RFC 5322 Message-ID header.'),
-          subject: z.string().describe('The subject of the message.'),
-        })
-        .passthrough(),
+      outputSchema: sendMessageResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
@@ -262,20 +245,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
           attachmentId: z.string().describe('The attachmentId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the attachment'),
-          filename: z.string().nullable().describe('The original filename.'),
-          contentType: z.string().describe('The MIME content type.'),
-          size: z.number().describe('The size in bytes.'),
-          contentDisposition: z.string().nullable().describe('The content disposition (inline or attachment).'),
-          contentId: z.string().nullable().describe('The CID for inline images.'),
-          downloadUrl: z
-            .string()
-            .describe('Presigned download URL (included when retrieving a single attachment).')
-            .optional(),
-        })
-        .passthrough(),
+      outputSchema: attachmentResponseOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
@@ -308,31 +278,13 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
         .strict(),
       outputSchema: z
         .object({
-          text: z
-            .object({
-              downloadUrl: z.string().describe('Presigned download URL.'),
-              size: z.number().nullable().describe('Uncompressed size in bytes.'),
-              expiresAt: z.string().describe('When the URL expires.'),
-            })
-            .passthrough()
+          text: messageContentItemOutput()
             .nullable()
             .describe('Plain text content, or `null` if not requested or unavailable.'),
-          html: z
-            .object({
-              downloadUrl: z.string().describe('Presigned download URL.'),
-              size: z.number().nullable().describe('Uncompressed size in bytes.'),
-              expiresAt: z.string().describe('When the URL expires.'),
-            })
-            .passthrough()
+          html: messageContentItemOutput()
             .nullable()
             .describe('HTML content, or `null` if not requested or unavailable.'),
-          mime: z
-            .object({
-              downloadUrl: z.string().describe('Presigned download URL.'),
-              size: z.number().nullable().describe('Uncompressed size in bytes.'),
-              expiresAt: z.string().describe('When the URL expires.'),
-            })
-            .passthrough()
+          mime: messageContentItemOutput()
             .nullable()
             .describe(
               'Raw MIME (.eml) content, or `null` if not requested or unavailable. Returned for received messages only.',
@@ -368,11 +320,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
           removeLabels: z.array(z.string()).describe('Labels to remove from the message.').optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {

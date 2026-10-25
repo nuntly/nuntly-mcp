@@ -8,6 +8,7 @@ import type {
 } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { broadcastResponseOutput, broadcastStatusOutput, idResponseOutput } from '../schemas.js';
 
 export function registerBroadcastsTools(server: McpServer, nuntly: Nuntly): void {
   // POST /broadcasts
@@ -30,43 +31,13 @@ export function registerBroadcastsTools(server: McpServer, nuntly: Nuntly): void
             .optional(),
           topicId: z.string().describe('The topic to send to.').optional(),
           segmentId: z.string().describe('The segment to send to.').optional(),
-          variables: z.record(z.string(), z.unknown()).describe('Variable values keyed by declared name.').optional(),
+          variables: z
+            .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+            .describe('Variable values keyed by declared name.')
+            .optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the broadcast.'),
-          name: z.string().describe('An internal label, shown only to your team.').optional(),
-          templateId: z.string().describe('The id of the template.').optional(),
-          templateVersionId: z
-            .string()
-            .describe('The content version this broadcast sends. Frozen once queued.')
-            .optional(),
-          domainId: z.string().describe('The id of the sending domain.').optional(),
-          topicId: z.string().describe('The topic this broadcast targets.').optional(),
-          segmentId: z.string().describe('The segment this broadcast targets.').optional(),
-          from: z.string(),
-          subject: z.string().describe('The subject, falling back to the template version’s subject.').optional(),
-          replyTo: z
-            .union([z.string(), z.array(z.string())])
-            .describe(
-              "The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address",
-            )
-            .optional(),
-          status: z
-            .enum(['draft', 'scheduled', 'queued', 'sending', 'sent', 'paused', 'failed'])
-            .or(z.string())
-            .describe('The lifecycle state of the broadcast.'),
-          statusAt: z.string().describe('Date at which the broadcast reached its current state.'),
-          statusReason: z
-            .record(z.string(), z.unknown())
-            .describe('May provide more information about the status.')
-            .optional(),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-          variables: z.record(z.string(), z.unknown()).describe('The stored variable values.').optional(),
-        })
-        .passthrough(),
+      outputSchema: broadcastResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
@@ -91,11 +62,7 @@ export function registerBroadcastsTools(server: McpServer, nuntly: Nuntly): void
           broadcastId: z.string().describe('The broadcastId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true, destructiveHint: true },
     },
     async (args) => {
@@ -119,7 +86,13 @@ export function registerBroadcastsTools(server: McpServer, nuntly: Nuntly): void
         .object({
           broadcastId: z.string().describe('The broadcastId'),
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
@@ -178,47 +151,18 @@ export function registerBroadcastsTools(server: McpServer, nuntly: Nuntly): void
       inputSchema: z
         .object({
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
         .object({
-          data: z.array(
-            z
-              .object({
-                id: z.string().describe('The id of the broadcast.'),
-                name: z.string().describe('An internal label, shown only to your team.').optional(),
-                templateId: z.string().describe('The id of the template.').optional(),
-                templateVersionId: z
-                  .string()
-                  .describe('The content version this broadcast sends. Frozen once queued.')
-                  .optional(),
-                domainId: z.string().describe('The id of the sending domain.').optional(),
-                topicId: z.string().describe('The topic this broadcast targets.').optional(),
-                segmentId: z.string().describe('The segment this broadcast targets.').optional(),
-                from: z.string(),
-                subject: z.string().describe('The subject, falling back to the template version’s subject.').optional(),
-                replyTo: z
-                  .union([z.string(), z.array(z.string())])
-                  .describe(
-                    "The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address",
-                  )
-                  .optional(),
-                status: z
-                  .enum(['draft', 'scheduled', 'queued', 'sending', 'sent', 'paused', 'failed'])
-                  .or(z.string())
-                  .describe('The lifecycle state of the broadcast.'),
-                statusAt: z.string().describe('Date at which the broadcast reached its current state.'),
-                statusReason: z
-                  .record(z.string(), z.unknown())
-                  .describe('May provide more information about the status.')
-                  .optional(),
-                createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-                updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-                variables: z.record(z.string(), z.unknown()).describe('The stored variable values.').optional(),
-              })
-              .passthrough(),
-          ),
+          data: z.array(broadcastResponseOutput()),
           nextCursor: z.string().nullable().optional(),
         })
         .passthrough(),
@@ -245,40 +189,7 @@ export function registerBroadcastsTools(server: McpServer, nuntly: Nuntly): void
           broadcastId: z.string().describe('The broadcastId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the broadcast.'),
-          name: z.string().describe('An internal label, shown only to your team.').optional(),
-          templateId: z.string().describe('The id of the template.').optional(),
-          templateVersionId: z
-            .string()
-            .describe('The content version this broadcast sends. Frozen once queued.')
-            .optional(),
-          domainId: z.string().describe('The id of the sending domain.').optional(),
-          topicId: z.string().describe('The topic this broadcast targets.').optional(),
-          segmentId: z.string().describe('The segment this broadcast targets.').optional(),
-          from: z.string(),
-          subject: z.string().describe('The subject, falling back to the template version’s subject.').optional(),
-          replyTo: z
-            .union([z.string(), z.array(z.string())])
-            .describe(
-              "The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address",
-            )
-            .optional(),
-          status: z
-            .enum(['draft', 'scheduled', 'queued', 'sending', 'sent', 'paused', 'failed'])
-            .or(z.string())
-            .describe('The lifecycle state of the broadcast.'),
-          statusAt: z.string().describe('Date at which the broadcast reached its current state.'),
-          statusReason: z
-            .record(z.string(), z.unknown())
-            .describe('May provide more information about the status.')
-            .optional(),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-          variables: z.record(z.string(), z.unknown()).describe('The stored variable values.').optional(),
-        })
-        .passthrough(),
+      outputSchema: broadcastResponseOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
@@ -307,10 +218,7 @@ export function registerBroadcastsTools(server: McpServer, nuntly: Nuntly): void
       outputSchema: z
         .object({
           id: z.string().describe('The id of the broadcast.'),
-          status: z
-            .enum(['draft', 'scheduled', 'queued', 'sending', 'sent', 'paused', 'failed'])
-            .or(z.string())
-            .describe('The lifecycle state of the broadcast.'),
+          status: broadcastStatusOutput().describe('The lifecycle state of the broadcast.'),
         })
         .passthrough(),
       annotations: { openWorldHint: true },
@@ -354,20 +262,13 @@ export function registerBroadcastsTools(server: McpServer, nuntly: Nuntly): void
           topicId: z.string().nullable().describe('Set to null to remove the topic.').optional(),
           segmentId: z.string().nullable().describe('Set to null to remove the segment.').optional(),
           variables: z
-            .record(z.string(), z.unknown())
+            .record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
             .describe('Replaces the stored values. Send {} to clear them.')
             .optional(),
-          status: z
-            .enum(['draft', 'scheduled', 'queued', 'sending', 'sent', 'paused', 'failed'])
-            .describe('Only draft is accepted.')
-            .optional(),
+          status: z.enum(['draft']).describe('Only draft is accepted.').optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {

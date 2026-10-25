@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CreateBulkEmailsRequest, CreateEmailRequest, CursorPageParams, Nuntly } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { emailContentItemOutput, emailStatusOutput, eventTypeOutput, tagInput } from '../schemas.js';
 
 export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
   // DELETE /emails/{id}
@@ -19,22 +20,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
       outputSchema: z
         .object({
           id: z.string().describe('The id of the email'),
-          status: z
-            .enum([
-              'queued',
-              'scheduled',
-              'processed',
-              'failed',
-              'sending',
-              'sent',
-              'delivered',
-              'bounced',
-              'complained',
-              'canceled',
-              'rejected',
-            ])
-            .or(z.string())
-            .describe('The status of the email.'),
+          status: emailStatusOutput().describe('The status of the email.'),
         })
         .passthrough(),
       annotations: { openWorldHint: true, destructiveHint: true },
@@ -72,32 +58,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
                 emailId: z.string().describe('The id of the email'),
                 createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
                 occurredAt: z.string().describe('The date at which the event occurred').optional(),
-                eventType: z
-                  .enum([
-                    'email.queued',
-                    'email.scheduled',
-                    'email.processed',
-                    'email.sending',
-                    'email.sent',
-                    'email.delivered',
-                    'email.opened',
-                    'email.clicked',
-                    'email.bounced',
-                    'email.complained',
-                    'email.rejected',
-                    'email.deliveryDelayed',
-                    'email.failed',
-                    'email.renderingFailed',
-                    'email.subscribed',
-                    'email.unsubscribed',
-                    'message.received',
-                    'message.security.flagged',
-                    'message.agent.triggered',
-                    'message.sent',
-                    'message.rejected',
-                  ])
-                  .or(z.string())
-                  .describe('An event'),
+                eventType: eventTypeOutput().describe('An event'),
                 payload: z.record(z.string(), z.unknown()),
               })
               .passthrough(),
@@ -127,7 +88,13 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
       inputSchema: z
         .object({
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
@@ -139,22 +106,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
                 from: z.string().describe('The e-mail address of the sender'),
                 to: z.union([z.string(), z.array(z.string())]).describe('The primary recipient(s) of the email'),
                 subject: z.string().describe('The subject of the e-mail'),
-                status: z
-                  .enum([
-                    'queued',
-                    'scheduled',
-                    'processed',
-                    'failed',
-                    'sending',
-                    'sent',
-                    'delivered',
-                    'bounced',
-                    'complained',
-                    'canceled',
-                    'rejected',
-                  ])
-                  .or(z.string())
-                  .describe('The status of the email.'),
+                status: emailStatusOutput().describe('The status of the email.'),
                 createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
                 scheduledAt: z.string().describe('The date at which the email is scheduled to be sent').optional(),
               })
@@ -203,22 +155,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
             .union([z.string(), z.array(z.string())])
             .describe('The blind carbon copy recipient(s) of the email')
             .optional(),
-          status: z
-            .enum([
-              'queued',
-              'scheduled',
-              'processed',
-              'failed',
-              'sending',
-              'sent',
-              'delivered',
-              'bounced',
-              'complained',
-              'canceled',
-              'rejected',
-            ])
-            .or(z.string())
-            .describe('The status of the email.'),
+          status: emailStatusOutput().describe('The status of the email.'),
           statusReason: z
             .record(z.string(), z.unknown())
             .describe('May provide more informations about the status')
@@ -288,27 +225,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
         .object({
           id: z.string(),
           emails: z.array(
-            z
-              .object({
-                id: z.string(),
-                status: z
-                  .enum([
-                    'queued',
-                    'scheduled',
-                    'processed',
-                    'failed',
-                    'sending',
-                    'sent',
-                    'delivered',
-                    'bounced',
-                    'complained',
-                    'canceled',
-                    'rejected',
-                  ])
-                  .or(z.string()),
-                detail: z.string().optional(),
-              })
-              .passthrough(),
+            z.object({ id: z.string(), status: emailStatusOutput(), detail: z.string().optional() }).passthrough(),
           ),
         })
         .passthrough(),
@@ -339,58 +256,16 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
         .strict(),
       outputSchema: z
         .object({
-          html: z
-            .object({
-              downloadUrl: z.string().describe('Presigned download URL.'),
-              size: z.number().nullable().describe('Uncompressed size in bytes.'),
-              expiresAt: z.string().describe('When the URL expires.'),
-            })
-            .passthrough()
-            .nullable()
-            .describe('HTML content, or `null` if unavailable.'),
-          text: z
-            .object({
-              downloadUrl: z.string().describe('Presigned download URL.'),
-              size: z.number().nullable().describe('Uncompressed size in bytes.'),
-              expiresAt: z.string().describe('When the URL expires.'),
-            })
-            .passthrough()
-            .nullable()
-            .describe('Plain text content, or `null` if unavailable.'),
-          mime: z
-            .object({
-              downloadUrl: z.string().describe('Presigned download URL.'),
-              size: z.number().nullable().describe('Uncompressed size in bytes.'),
-              expiresAt: z.string().describe('When the URL expires.'),
-            })
-            .passthrough()
-            .nullable()
-            .describe('Raw MIME (.eml) content, or `null` if unavailable.'),
-          subjectTemplate: z
-            .object({
-              downloadUrl: z.string().describe('Presigned download URL.'),
-              size: z.number().nullable().describe('Uncompressed size in bytes.'),
-              expiresAt: z.string().describe('When the URL expires.'),
-            })
-            .passthrough()
+          html: emailContentItemOutput().nullable().describe('HTML content, or `null` if unavailable.'),
+          text: emailContentItemOutput().nullable().describe('Plain text content, or `null` if unavailable.'),
+          mime: emailContentItemOutput().nullable().describe('Raw MIME (.eml) content, or `null` if unavailable.'),
+          subjectTemplate: emailContentItemOutput()
             .nullable()
             .describe('Subject template content, or `null` if unavailable. Returned for failed emails only.'),
-          htmlTemplate: z
-            .object({
-              downloadUrl: z.string().describe('Presigned download URL.'),
-              size: z.number().nullable().describe('Uncompressed size in bytes.'),
-              expiresAt: z.string().describe('When the URL expires.'),
-            })
-            .passthrough()
+          htmlTemplate: emailContentItemOutput()
             .nullable()
             .describe('HTML template content, or `null` if unavailable. Returned for failed emails only.'),
-          textTemplate: z
-            .object({
-              downloadUrl: z.string().describe('Presigned download URL.'),
-              size: z.number().nullable().describe('Uncompressed size in bytes.'),
-              expiresAt: z.string().describe('When the URL expires.'),
-            })
-            .passthrough()
+          textTemplate: emailContentItemOutput()
             .nullable()
             .describe('Text template content, or `null` if unavailable. Returned for failed emails only.'),
         })
@@ -485,18 +360,8 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
           subject: z.string().describe('The subject of the e-mail'),
           text: z.string().describe('The plaintext version of the email').optional(),
           html: z.string().describe('The HTML version of the email').optional(),
-          headers: z.record(z.string(), z.unknown()).describe('The headers to add to the email').optional(),
-          tags: z
-            .array(
-              z
-                .object({
-                  name: z.string().describe('The name of the tag'),
-                  value: z.string().describe('The tag to add to the email'),
-                })
-                .strict(),
-            )
-            .describe('The tags to add to the email')
-            .optional(),
+          headers: z.record(z.string(), z.string()).describe('The headers to add to the email').optional(),
+          tags: z.array(tagInput()).describe('The tags to add to the email').optional(),
           attachments: z
             .array(
               z
@@ -512,29 +377,17 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
             )
             .describe('The attachements to add to the email')
             .optional(),
-          variables: z.record(z.string(), z.unknown()).describe('The variables for the template').optional(),
+          variables: z
+            .record(z.string(), z.union([z.string(), z.number(), z.boolean()]).nullable())
+            .describe('The variables for the template')
+            .optional(),
           scheduledAt: z.string().describe('The date at which the email is scheduled to be sent').optional(),
         })
         .strict(),
       outputSchema: z
         .object({
           id: z.string().describe('The id of the email'),
-          status: z
-            .enum([
-              'queued',
-              'scheduled',
-              'processed',
-              'failed',
-              'sending',
-              'sent',
-              'delivered',
-              'bounced',
-              'complained',
-              'canceled',
-              'rejected',
-            ])
-            .or(z.string())
-            .describe('The status of the email.'),
+          status: emailStatusOutput().describe('The status of the email.'),
         })
         .passthrough(),
       annotations: { openWorldHint: true },
@@ -583,19 +436,12 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
               subject: z.string().describe('The subject of the e-mail').optional(),
               text: z.string().describe('The plaintext version of the email').optional(),
               html: z.string().describe('The HTML version of the email').optional(),
-              headers: z.record(z.string(), z.unknown()).describe('The headers to add to the email').optional(),
-              tags: z
-                .array(
-                  z
-                    .object({
-                      name: z.string().describe('The name of the tag'),
-                      value: z.string().describe('The tag to add to the email'),
-                    })
-                    .strict(),
-                )
-                .describe('The tags to add to the email')
+              headers: z.record(z.string(), z.string()).describe('The headers to add to the email').optional(),
+              tags: z.array(tagInput()).describe('The tags to add to the email').optional(),
+              variables: z
+                .record(z.string(), z.union([z.string(), z.number(), z.boolean()]).nullable())
+                .describe('The variables for the template')
                 .optional(),
-              variables: z.record(z.string(), z.unknown()).describe('The variables for the template').optional(),
             })
             .strict()
             .describe('Used as a fallback field email value if no value is present in emails.')
@@ -626,19 +472,12 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
                   subject: z.string().describe('The subject of the e-mail').optional(),
                   text: z.string().describe('The plaintext version of the email').optional(),
                   html: z.string().describe('The HTML version of the email').optional(),
-                  headers: z.record(z.string(), z.unknown()).describe('The headers to add to the email').optional(),
-                  tags: z
-                    .array(
-                      z
-                        .object({
-                          name: z.string().describe('The name of the tag'),
-                          value: z.string().describe('The tag to add to the email'),
-                        })
-                        .strict(),
-                    )
-                    .describe('The tags to add to the email')
+                  headers: z.record(z.string(), z.string()).describe('The headers to add to the email').optional(),
+                  tags: z.array(tagInput()).describe('The tags to add to the email').optional(),
+                  variables: z
+                    .record(z.string(), z.union([z.string(), z.number(), z.boolean()]).nullable())
+                    .describe('The variables for the template')
                     .optional(),
-                  variables: z.record(z.string(), z.unknown()).describe('The variables for the template').optional(),
                 })
                 .strict(),
             )
@@ -648,28 +487,7 @@ export function registerEmailsTools(server: McpServer, nuntly: Nuntly): void {
       outputSchema: z
         .object({
           id: z.string().describe('The bulk id').optional(),
-          emails: z.array(
-            z
-              .object({
-                id: z.string().optional(),
-                status: z
-                  .enum([
-                    'queued',
-                    'scheduled',
-                    'processed',
-                    'failed',
-                    'sending',
-                    'sent',
-                    'delivered',
-                    'bounced',
-                    'complained',
-                    'canceled',
-                    'rejected',
-                  ])
-                  .or(z.string()),
-              })
-              .passthrough(),
-          ),
+          emails: z.array(z.object({ id: z.string().optional(), status: emailStatusOutput() }).passthrough()),
         })
         .passthrough(),
       annotations: { openWorldHint: true },

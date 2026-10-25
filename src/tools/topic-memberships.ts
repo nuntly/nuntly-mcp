@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CursorPageParams, Nuntly, SetContactTopicMembershipRequest } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { topicMembershipStateOutput } from '../schemas.js';
 
 export function registerTopicMembershipsTools(server: McpServer, nuntly: Nuntly): void {
   // GET /contacts/{contactId}/topics
@@ -21,10 +22,7 @@ export function registerTopicMembershipsTools(server: McpServer, nuntly: Nuntly)
             z
               .object({
                 topicId: z.string().describe('The id of the topic.'),
-                state: z
-                  .enum(['subscribed', 'unsubscribed'])
-                  .or(z.string())
-                  .describe('The subscribe/unsubscribe state.'),
+                state: topicMembershipStateOutput().describe('The subscribe/unsubscribe state.'),
                 source: z
                   .enum(['explicit', 'default', 'platform_opt_out'])
                   .or(z.string())
@@ -59,7 +57,13 @@ export function registerTopicMembershipsTools(server: McpServer, nuntly: Nuntly)
         .object({
           topicId: z.string().describe('The topicId'),
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
@@ -68,10 +72,7 @@ export function registerTopicMembershipsTools(server: McpServer, nuntly: Nuntly)
             z
               .object({
                 contactId: z.string().describe('The id of the contact.'),
-                state: z
-                  .enum(['subscribed', 'unsubscribed'])
-                  .or(z.string())
-                  .describe('The subscribe/unsubscribe state.'),
+                state: topicMembershipStateOutput().describe('The subscribe/unsubscribe state.'),
                 createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
                 updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
               })
@@ -113,7 +114,7 @@ export function registerTopicMembershipsTools(server: McpServer, nuntly: Nuntly)
         .object({
           contactId: z.string().describe('The id of the contact.'),
           topicId: z.string().describe('The id of the topic.'),
-          state: z.enum(['subscribed', 'unsubscribed']).or(z.string()).describe('The subscribe/unsubscribe state.'),
+          state: topicMembershipStateOutput().describe('The subscribe/unsubscribe state.'),
           updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
         })
         .passthrough(),

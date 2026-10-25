@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CursorPageParams, Nuntly } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { eventTypeOutput } from '../schemas.js';
 
 export function registerWebhooksEventsTools(server: McpServer, nuntly: Nuntly): void {
   // GET /webhooks/{id}/events/{eventId}/deliveries
@@ -56,7 +57,13 @@ export function registerWebhooksEventsTools(server: McpServer, nuntly: Nuntly): 
       inputSchema: z
         .object({
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
@@ -67,32 +74,7 @@ export function registerWebhooksEventsTools(server: McpServer, nuntly: Nuntly): 
                 id: z.string().describe('The id of the webhook event'),
                 webhookId: z.string().describe('The id of the webhook'),
                 orgId: z.string().describe('The id of the organization'),
-                event: z
-                  .enum([
-                    'email.queued',
-                    'email.scheduled',
-                    'email.processed',
-                    'email.sending',
-                    'email.sent',
-                    'email.delivered',
-                    'email.opened',
-                    'email.clicked',
-                    'email.bounced',
-                    'email.complained',
-                    'email.rejected',
-                    'email.deliveryDelayed',
-                    'email.failed',
-                    'email.renderingFailed',
-                    'email.subscribed',
-                    'email.unsubscribed',
-                    'message.received',
-                    'message.security.flagged',
-                    'message.agent.triggered',
-                    'message.sent',
-                    'message.rejected',
-                  ])
-                  .or(z.string())
-                  .describe('An event'),
+                event: eventTypeOutput().describe('An event'),
                 successfulAt: z
                   .string()
                   .describe('The timestamp when the event was successfully delivered to the endpoint')

@@ -69,7 +69,7 @@ describe('MCP input strictness', () => {
     expect(bodies).toHaveLength(0);
   });
 
-  it('rejects an unknown field on a tool without an output schema', async () => {
+  it('rejects an unknown field on a tool that takes only path parameters', async () => {
     const { client, bodies } = await connect();
 
     const result = await client.callTool({

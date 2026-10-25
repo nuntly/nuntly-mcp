@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { AgentMemoryQuery, AgentMemoryRequest, Nuntly } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { agentMemoryOutput } from '../schemas.js';
 
 export function registerAgentsTools(server: McpServer, nuntly: Nuntly): void {
   // GET /agents/{agentId}/memory
@@ -24,18 +25,7 @@ export function registerAgentsTools(server: McpServer, nuntly: Nuntly): void {
             .optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().nullable().describe('The agent memory record id.'),
-          createdAt: z.string().nullable().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().nullable().describe('Date at which the object was updated (ISO 8601 format)'),
-          agentId: z.string().describe('The agent identifier.'),
-          inboxId: z.string().nullable().describe('The inbox id.'),
-          threadId: z.string().nullable().describe('The thread id.'),
-          memory: z.record(z.string(), z.unknown()).describe('The agent memory data.'),
-          summary: z.string().nullable().describe('The conversation summary.'),
-        })
-        .passthrough(),
+      outputSchema: agentMemoryOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
@@ -70,22 +60,23 @@ export function registerAgentsTools(server: McpServer, nuntly: Nuntly): void {
             .string()
             .describe('The id of a thread in your organization. Scopes memory to that thread.')
             .optional(),
-          memory: z.record(z.string(), z.unknown()).describe('The agent memory key-value data.'),
+          memory: z
+            .record(
+              z.string(),
+              z
+                .union([
+                  z.string(),
+                  z.number(),
+                  z.boolean(),
+                  z.array(z.union([z.string(), z.number(), z.boolean()]).nullable()),
+                ])
+                .nullable(),
+            )
+            .describe('The agent memory key-value data.'),
           summary: z.string().nullable().describe('A human-readable conversation summary.').optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().nullable().describe('The agent memory record id.'),
-          createdAt: z.string().nullable().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().nullable().describe('Date at which the object was updated (ISO 8601 format)'),
-          agentId: z.string().describe('The agent identifier.'),
-          inboxId: z.string().nullable().describe('The inbox id.'),
-          threadId: z.string().nullable().describe('The thread id.'),
-          memory: z.record(z.string(), z.unknown()).describe('The agent memory data.'),
-          summary: z.string().nullable().describe('The conversation summary.'),
-        })
-        .passthrough(),
+      outputSchema: agentMemoryOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {

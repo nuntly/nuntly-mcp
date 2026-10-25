@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CursorPageParams, Nuntly, RetrieveThreadQuery, ThreadsQuery, UpdateThreadRequest } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { idResponseOutput, threadResponseOutput } from '../schemas.js';
 
 export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
   // GET /inboxes/{inboxId}/threads
@@ -15,7 +16,13 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
         .object({
           inboxId: z.string().describe('The inboxId'),
           cursor: z.string().describe('The cursor to retrieve the next page of results').optional(),
-          limit: z.number().describe('The maximum number of results to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
           labels: z
             .string()
             .describe(
@@ -26,23 +33,7 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
         .strict(),
       outputSchema: z
         .object({
-          data: z.array(
-            z
-              .object({
-                id: z.string().describe('The id of the thread'),
-                createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-                updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
-                domainId: z.string().nullable().describe('The id of the domain.'),
-                domainName: z.string().describe('The domain name.'),
-                inboxId: z.string().describe('The id of the inbox.'),
-                subject: z.string().describe('The original subject line.'),
-                lastMessageAt: z.string().describe('The timestamp of the most recent message.'),
-                messageCount: z.number().describe('The number of messages in the thread.'),
-                labels: z.array(z.string()).describe('Aggregated labels from all messages in the thread.'),
-                agentId: z.string().nullable().describe('The AI agent identifier.'),
-              })
-              .passthrough(),
-          ),
+          data: z.array(threadResponseOutput()),
           nextCursor: z.string().nullable().optional(),
         })
         .passthrough(),
@@ -74,7 +65,13 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
         .object({
           threadId: z.string().describe('The threadId'),
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
@@ -141,22 +138,8 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
             .optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the thread'),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)').optional(),
-          domainId: z.string().nullable().describe('The id of the domain.'),
-          domainName: z.string().describe('The domain name.'),
-          inboxId: z.string().describe('The id of the inbox.'),
-          subject: z.string().describe('The original subject line.'),
-          lastMessageAt: z.string().describe('The timestamp of the most recent message.'),
-          messageCount: z.number().describe('The number of messages in the thread.'),
-          labels: z.array(z.string()).describe('Aggregated labels from all messages in the thread.'),
-          agentId: z.string().nullable().describe('The AI agent identifier.'),
-        })
-        .passthrough(),
-      annotations: { openWorldHint: true },
+      outputSchema: threadResponseOutput(),
+      annotations: { openWorldHint: true, destructiveHint: false, idempotentHint: true },
     },
     async (args) => {
       try {
@@ -184,11 +167,7 @@ export function registerThreadsTools(server: McpServer, nuntly: Nuntly): void {
           agentId: z.string().nullable().describe('The AI agent identifier.').optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
