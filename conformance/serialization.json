@@ -1,0 +1,72 @@
+{
+  "description": "Serialization of free-form values. Each case calls call.operation with call.args against one 200 response carrying response.body, then reads expected.path on the returned value: the first name is a field of the response, each next one a key of a map. expected.number is the JSON number the response carries there, and expected.integer says whether it reads back as an integer (a Java Long) or as a fractional number (a Java Double), with its exact value.",
+  "cases": [
+    {
+      "name": "an integer in a map value reads back as an integer with its exact value",
+      "call": {
+        "operation": "agents.memory.retrieve",
+        "args": [
+          "agent_support"
+        ]
+      },
+      "response": {
+        "body": {
+          "data": {
+            "id": "mem_1",
+            "createdAt": "2026-10-21T09:30:00Z",
+            "updatedAt": "2026-10-21T09:30:00Z",
+            "agentId": "agent_support",
+            "inboxId": null,
+            "threadId": null,
+            "memory": {
+              "lastOrderNumber": 1234567890123,
+              "openTickets": 2
+            },
+            "summary": null
+          }
+        }
+      },
+      "expected": {
+        "path": [
+          "memory",
+          "lastOrderNumber"
+        ],
+        "number": 1234567890123,
+        "integer": true
+      }
+    },
+    {
+      "name": "a fractional number in a map value reads back as a fractional number",
+      "call": {
+        "operation": "agents.memory.retrieve",
+        "args": [
+          "agent_support"
+        ]
+      },
+      "response": {
+        "body": {
+          "data": {
+            "id": "mem_1",
+            "createdAt": "2026-10-21T09:30:00Z",
+            "updatedAt": "2026-10-21T09:30:00Z",
+            "agentId": "agent_support",
+            "inboxId": null,
+            "threadId": null,
+            "memory": {
+              "satisfaction": 0.75
+            },
+            "summary": null
+          }
+        }
+      },
+      "expected": {
+        "path": [
+          "memory",
+          "satisfaction"
+        ],
+        "number": 0.75,
+        "integer": false
+      }
+    }
+  ]
+}

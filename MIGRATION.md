@@ -22,26 +22,15 @@ The `limit` argument of every list tool refuses a value that is not an integer f
 
 ### Tool names follow the SDK names
 
-Every tool name is now the name its SDK method implies: `nuntly.emails.bulk.send()` is `send-email-bulk`. The tool names are the OpenAPI `operationId`s, renamed the same way. `list-webhook-event-deliveries` keeps its 1.x name. The renamed tools, and whether the old name shipped in 1.x:
+Every tool name is now the name its SDK method implies: `nuntly.emails.bulk.send()` is `send-email-bulk`. The tool names are the OpenAPI `operationId`s, renamed the same way. `list-webhook-event-deliveries` keeps its 1.x name. The renamed tools:
 
-| Before | 2.0.0 | In 1.x |
-|---|---|---|
-| `send-bulk-emails` | `send-email-bulk` | yes |
-| `retrieve-bulk-emails` | `retrieve-email-bulk` | yes |
-| `retrieve-email-events` | `list-email-events` | yes |
-| `reply-to-message` | `reply-message` | yes |
-| `list-webhooks-events` | `list-webhook-events` | yes |
-| `add-contact-segment-membership` | `add-contact-segment` | no |
-| `check-contact-segment-membership` | `retrieve-contact-segment` | no |
-| `remove-contact-segment-membership` | `remove-contact-segment` | no |
-| `list-contact-topic-memberships` | `list-contact-topics` | no |
-| `set-contact-topic-membership` | `update-contact-topic` | no |
-| `create-contact-property-definition` | `create-contact-property` | no |
-| `list-contact-property-definitions` | `list-contact-properties` | no |
-| `retrieve-contact-property-definition` | `retrieve-contact-property` | no |
-| `update-contact-property-definition` | `update-contact-property` | no |
-| `delete-contact-property-definition` | `delete-contact-property` | no |
-| `list-topic-membership-exceptions` | `list-topic-memberships` | no |
+| Before | 2.0.0 |
+|---|---|
+| `send-bulk-emails` | `send-email-bulk` |
+| `retrieve-bulk-emails` | `retrieve-email-bulk` |
+| `retrieve-email-events` | `list-email-events` |
+| `reply-to-message` | `reply-message` |
+| `list-webhooks-events` | `list-webhook-events` |
 
 Update every place that names a tool: an MCP client allowlist or permission rule (for example an `allowedTools` entry), and a prompt or agent configuration that names a tool.
 
@@ -53,6 +42,7 @@ The server sends its requests through `@nuntly/sdk`, so these changes of the [SD
 - `retrieve-agent-memory` returns an empty memory instead of a not-found error when nothing is saved, and `upsert-agent-memory` checks the inbox and thread. See [Agent memory reads as empty](https://github.com/nuntly/nuntly-sdk-typescript/blob/main/MIGRATION.md#3-agent-memory-reads-as-empty). The API serves this empty memory to a 1.x server too, whose `retrieve-agent-memory` then fails its output validation.
 - The `events` argument of `create-webhook` and `update-webhook` accepts the 14 event types a webhook delivers. The 7 internal types (such as `email.queued` or `email.unsubscribed`) fail input validation. See [Webhooks use the webhook event types only](https://github.com/nuntly/nuntly-sdk-typescript/blob/main/MIGRATION.md#6-webhooks-use-the-webhook-event-types-only).
 - A path id equal to `''`, `.` or `..` fails before any request is sent. See [Fixed in 2.0.0](https://github.com/nuntly/nuntly-sdk-typescript/blob/main/MIGRATION.md#fixed-in-200).
+- The list tools return `nextCursor: null` on the last page. They used to leave `nextCursor` out there. See [Fixed in 2.0.0](https://github.com/nuntly/nuntly-sdk-typescript/blob/main/MIGRATION.md#fixed-in-200).
 
 ### Fixed in 2.0.0
 

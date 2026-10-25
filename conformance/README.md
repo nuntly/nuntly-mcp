@@ -1,14 +1,15 @@
 # SDK conformance vectors
 
-Language-neutral cases that pin the runtime behavior every Nuntly SDK shares. The TypeScript SDK (`nuntly-sdk-typescript`) runs every case of every file in `tests/conformance.test.ts`. The Java SDK (`nuntly-sdk-java`) runs them in `ConformanceTest` in the `core` test sources (retry, errors, pagination, transport) and in the `sdk` test sources (`WebhookConformanceTest`, and `ResourceConformanceTest` for the transport path id cases and forward compatibility). The MCP server (`nuntly-mcp`) runs `errors.json` in `tests/conformance-errors.test.ts`: a failed tool call's text carries the status, code, details and request id.
+Language-neutral cases that pin the runtime behavior every Nuntly SDK shares. The TypeScript SDK (`nuntly-sdk-typescript`) runs every case of every file in `tests/conformance.test.ts`. The Java SDK (`nuntly-sdk-java`) runs them in `ConformanceTest` in the `core` test sources (retry, errors, pagination, transport) and in the `sdk` test sources (`WebhookConformanceTest`, and `ResourceConformanceTest` for the transport path id cases, forward compatibility and serialization). The MCP server (`nuntly-mcp`) runs `errors.json` in `tests/conformance-errors.test.ts`: a failed tool call's text carries the status, code, details and request id.
 
 | File | Pins |
 |---|---|
 | `webhook.json` | Signature header parsing, secrets, rotation, tolerance in both directions, unknown event types, signed payloads that are not an event |
 | `retry.json` | Which responses and errors are retried, how many times, the delay before each retry, idempotency key reuse, the order of the hook calls |
 | `errors.json` | The error type for each status and the `status`, `code`, `title`, `details`, `requestId` and `retryAfter` accessors |
-| `pagination.json` | The page after the last one, auto-pagination across pages, and a cursor the API returns again |
+| `pagination.json` | A last page without a next cursor, the page after the last one, auto-pagination across pages, and a cursor the API returns again |
 | `transport.json` | Request URLs built from the base URL and from path ids, the path ids rejected before sending, and the timeout error kept apart from other connection errors |
+| `serialization.json` | Numbers in free-form values, read back as integers or fractional numbers with their exact value |
 
 Each expected outcome comes from the API or from the shared SDK contract, never from running the SDK under test.
 
