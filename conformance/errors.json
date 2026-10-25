@@ -1,0 +1,343 @@
+{
+  "description": "Error mapping. Each case runs one GET with retries disabled against one response; body is JSON, rawBody is sent as is. expected lists the accessors every runtime exposes (see README.md); an absent details or requestId means none. A 2xx case expects the SDK error for a body that is not the JSON object every operation reads. messageIncludes is text the error message contains.",
+  "cases": [
+    {
+      "name": "400 invalid idempotency key",
+      "response": {
+        "status": 400,
+        "body": {
+          "error": {
+            "status": 400,
+            "code": "idempotency_key_invalid",
+            "title": "Invalid idempotency key",
+            "details": "Idempotency key must be between 8 and 255 characters."
+          }
+        }
+      },
+      "expected": {
+        "kind": "bad_request",
+        "status": 400,
+        "code": "idempotency_key_invalid",
+        "title": "Invalid idempotency key",
+        "details": "Idempotency key must be between 8 and 255 characters."
+      }
+    },
+    {
+      "name": "401 invalid API key",
+      "response": {
+        "status": 401,
+        "body": {
+          "error": {
+            "status": 401,
+            "code": "unauthorized",
+            "title": "Invalid API key"
+          }
+        }
+      },
+      "expected": {
+        "kind": "authentication",
+        "status": 401,
+        "code": "unauthorized",
+        "title": "Invalid API key"
+      }
+    },
+    {
+      "name": "402 plan exhausted maps to the generic API error",
+      "response": {
+        "status": 402,
+        "body": {
+          "error": {
+            "status": 402,
+            "code": "plan_exhausted",
+            "title": "Your plan usage is exhausted for daily email sending",
+            "details": "Please upgrade your subscription to enable email sending."
+          }
+        }
+      },
+      "expected": {
+        "kind": "api",
+        "status": 402,
+        "code": "plan_exhausted",
+        "title": "Your plan usage is exhausted for daily email sending",
+        "details": "Please upgrade your subscription to enable email sending."
+      }
+    },
+    {
+      "name": "403 missing permission",
+      "response": {
+        "status": 403,
+        "body": {
+          "error": {
+            "status": 403,
+            "code": "forbidden",
+            "title": "API key has no permissions set"
+          }
+        }
+      },
+      "expected": {
+        "kind": "permission_denied",
+        "status": 403,
+        "code": "forbidden",
+        "title": "API key has no permissions set"
+      }
+    },
+    {
+      "name": "404 not found with a request id",
+      "response": {
+        "status": 404,
+        "headers": {
+          "x-request-id": "req_01k8a1conformance"
+        },
+        "body": {
+          "error": {
+            "status": 404,
+            "code": "not_found",
+            "title": "The resource you requested does not exist"
+          }
+        }
+      },
+      "expected": {
+        "kind": "not_found",
+        "status": 404,
+        "code": "not_found",
+        "title": "The resource you requested does not exist",
+        "requestId": "req_01k8a1conformance"
+      }
+    },
+    {
+      "name": "409 idempotency key reused with a different payload",
+      "response": {
+        "status": 409,
+        "body": {
+          "error": {
+            "status": 409,
+            "code": "idempotency_key_payload_mismatch",
+            "title": "Idempotency key reused with different payload",
+            "details": "The idempotency key has already been used with a different request body. Use a new key for different requests."
+          }
+        }
+      },
+      "expected": {
+        "kind": "conflict",
+        "status": 409,
+        "code": "idempotency_key_payload_mismatch",
+        "title": "Idempotency key reused with different payload",
+        "details": "The idempotency key has already been used with a different request body. Use a new key for different requests."
+      }
+    },
+    {
+      "name": "422 body validation",
+      "response": {
+        "status": 422,
+        "body": {
+          "error": {
+            "status": 422,
+            "code": "invalid_body",
+            "title": "The body is invalid",
+            "details": "The field 'to' is invalid or missing."
+          }
+        }
+      },
+      "expected": {
+        "kind": "unprocessable_entity",
+        "status": 422,
+        "code": "invalid_body",
+        "title": "The body is invalid",
+        "details": "The field 'to' is invalid or missing."
+      }
+    },
+    {
+      "name": "422 with structured details",
+      "response": {
+        "status": 422,
+        "body": {
+          "error": {
+            "status": 422,
+            "code": "invalid_cursor",
+            "title": "The cursor provided is invalid",
+            "details": {
+              "cursor": "malformed"
+            }
+          }
+        }
+      },
+      "expected": {
+        "kind": "unprocessable_entity",
+        "status": 422,
+        "code": "invalid_cursor",
+        "title": "The cursor provided is invalid",
+        "details": {
+          "cursor": "malformed"
+        }
+      }
+    },
+    {
+      "name": "429 rate limited",
+      "response": {
+        "status": 429,
+        "headers": {
+          "retry-after": "3"
+        },
+        "body": {
+          "error": {
+            "status": 429,
+            "code": "rate_limited",
+            "title": "Too many requests"
+          }
+        }
+      },
+      "expected": {
+        "kind": "rate_limit",
+        "status": 429,
+        "code": "rate_limited",
+        "title": "Too many requests",
+        "retryAfterMs": 3000
+      }
+    },
+    {
+      "name": "429 Retry-After in decimal seconds",
+      "response": {
+        "status": 429,
+        "headers": {
+          "retry-after": "1.5"
+        },
+        "body": {
+          "error": {
+            "status": 429,
+            "code": "rate_limited",
+            "title": "Too many requests"
+          }
+        }
+      },
+      "expected": {
+        "kind": "rate_limit",
+        "status": 429,
+        "retryAfterMs": 1500
+      }
+    },
+    {
+      "name": "429 Retry-After as an HTTP date",
+      "response": {
+        "status": 429,
+        "headers": {
+          "retry-after": "Wed, 21 Oct 2015 07:28:00 GMT"
+        },
+        "body": {
+          "error": {
+            "status": 429,
+            "code": "rate_limited",
+            "title": "Too many requests"
+          }
+        }
+      },
+      "expected": {
+        "kind": "rate_limit",
+        "status": 429,
+        "retryAfterMs": 0
+      }
+    },
+    {
+      "name": "500 internal error",
+      "response": {
+        "status": 500,
+        "body": {
+          "error": {
+            "status": 500,
+            "code": "internal_server_error",
+            "title": "An internal server error occurred"
+          }
+        }
+      },
+      "expected": {
+        "kind": "internal_server",
+        "status": 500,
+        "code": "internal_server_error",
+        "title": "An internal server error occurred"
+      }
+    },
+    {
+      "name": "502 HTML page from a proxy keeps the status and an excerpt",
+      "response": {
+        "status": 502,
+        "headers": {
+          "content-type": "text/html"
+        },
+        "rawBody": "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<!-- a padding comment to push the page past the excerpt length -->\r\n<!-- a padding comment to push the page past the excerpt length -->\r\n<!-- a padding comment to push the page past the excerpt length -->\r\n</body>\r\n</html>\r\n"
+      },
+      "expected": {
+        "kind": "internal_server",
+        "status": 502,
+        "code": "unknown",
+        "title": "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body>\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<!-- a padding comment to push the page past the excerpt length -->\r\n<!-- a padding comment to p"
+      }
+    },
+    {
+      "name": "413 plain-text body",
+      "response": {
+        "status": 413,
+        "headers": {
+          "content-type": "text/plain"
+        },
+        "rawBody": "Request Entity Too Large"
+      },
+      "expected": {
+        "kind": "api",
+        "status": 413,
+        "code": "unknown",
+        "title": "Request Entity Too Large"
+      }
+    },
+    {
+      "name": "empty error body",
+      "response": {
+        "status": 503,
+        "rawBody": ""
+      },
+      "expected": {
+        "kind": "internal_server",
+        "status": 503,
+        "code": "unknown",
+        "title": "Request failed"
+      }
+    },
+    {
+      "name": "2xx with an empty body where JSON is expected",
+      "response": {
+        "status": 200,
+        "rawBody": ""
+      },
+      "expected": {
+        "kind": "sdk",
+        "messageIncludes": "the request may have been applied"
+      }
+    },
+    {
+      "name": "2xx with an HTML body where JSON is expected",
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/html"
+        },
+        "rawBody": "<html><body>Sign in to the network</body></html>"
+      },
+      "expected": {
+        "kind": "sdk",
+        "messageIncludes": "the request may have been applied"
+      }
+    },
+    {
+      "name": "2xx with a JSON body that is not an object",
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "application/json"
+        },
+        "rawBody": "\"ok\""
+      },
+      "expected": {
+        "kind": "sdk",
+        "messageIncludes": "the request may have been applied"
+      }
+    }
+  ]
+}

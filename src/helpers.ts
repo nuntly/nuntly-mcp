@@ -23,8 +23,9 @@ export function formatStructuredResult(data: unknown) {
 interface ApiErrorShape {
   status?: number;
   message?: string;
+  code?: string;
+  details?: unknown;
   requestId?: string | null;
-  body?: { errors?: unknown };
 }
 
 function isApiErrorShape(e: unknown): e is ApiErrorShape {
@@ -35,7 +36,9 @@ export function formatError(error: unknown) {
   const e: ApiErrorShape = isApiErrorShape(error) ? error : {};
   const parts: string[] = [e.message ?? String(error)];
   if (e.status) parts.unshift(`HTTP ${e.status}`);
+  // `unknown` is the code of a body that is not the API error JSON: it tells the agent nothing.
+  if (e.code && e.code !== 'unknown') parts.push(`code: ${e.code}`);
+  if (e.details !== undefined) parts.push(`details: ${JSON.stringify(e.details)}`);
   if (e.requestId) parts.push(`(request: ${e.requestId})`);
-  if (e.body?.errors) parts.push(`Fields: ${JSON.stringify(e.body.errors)}`);
   return { content: [{ type: 'text' as const, text: parts.join(' - ') }], isError: true };
 }

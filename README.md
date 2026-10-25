@@ -210,7 +210,7 @@ Validate the JSON syntax of `claude_desktop_config.json` (a trailing comma silen
 Grab a key from [nuntly.com](https://nuntly.com) and paste it under `env` in your MCP client config. The server reads the variable from the spawned process environment, not from your shell.
 
 **Tool returns `isError: true`**
-The structured `content` block contains an `error` object with `status`, `code`, and `requestId`. Use the `requestId` when contacting support. A 401 means the API key is missing, revoked, or scoped to a different organization.
+The text `content` block holds the HTTP status, the error message, the API error `code`, its `details` when the API sent any, and the request id. Use the request id when contacting support. A 401 means the API key is missing, revoked, or scoped to a different organization.
 
 **`command not found: npx`**
 Install Node.js 20 or later from [nodejs.org](https://nodejs.org). `npx` ships with Node and is the spawn target used by every MCP client in the examples above.

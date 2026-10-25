@@ -57,3 +57,5 @@ The server sends its requests through `@nuntly/sdk`, so these changes of the [SD
 ### Fixed in 2.0.0
 
 The output schemas accept fields added by later API releases, at every object level. Since 1.x every output object rejected unknown fields, so a client validating `structuredContent` failed a call that had succeeded on the API (a `send-email` could send the email and still report an error). Input schemas stay closed.
+
+A failed tool call's text holds the API error `code` and its `details`, such as the field a 422 names, next to the HTTP status, the message and the request id. Since 1.x it read a `body.errors` field the SDK error does not have, so the code and the details were lost.

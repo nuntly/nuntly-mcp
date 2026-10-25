@@ -162,7 +162,7 @@ export function registerMessagesTools(server: McpServer, nuntly: Nuntly): void {
           messageId: z.string().describe('The messageId'),
           text: z.string().describe('The plain text body.').optional(),
           html: z.string().describe('The HTML body.').optional(),
-          replyAll: z.boolean().describe('Whether to reply to all recipients.'),
+          replyAll: z.boolean().describe('Whether to reply to all recipients.').optional(),
         })
         .strict(),
       outputSchema: sendMessageResponseOutput(),

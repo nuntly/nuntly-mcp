@@ -1,0 +1,468 @@
+{
+  "description": "Transport. Each case sends request.method on request.path with the client options over the scripted responses served in order, as in retry.json. expected.url is the URL every call requested; error.kind names the error type and error.notKind a type it must not be (see README.md). client.apiKey is the API key (a test value when absent) and client.debug turns the SDK log on; client.timeoutMs and request.timeoutMs set the client and the per-request timeout in milliseconds, and an error there may come from building the client; expected.sentAuthorization is the Authorization header every call sent, and expected.apiKeyHidden means the key appears in no string form of the client or its options, no argument of any hook, no log line and no string form of the error. A case with call instead of request calls one SDK method by its dotted operation name with the given path ids (null is a missing id), then call.query as its query params when present, with retries disabled, against a server that answers 200 with {\"data\": {}}; a sent request has expected.method, expected.path and, when given, the raw query string expected.query. A call with safe: true goes through the safe client, which resolves to { data: null, error } instead of rejecting.",
+  "cases": [
+    {
+      "name": "a base URL with a trailing slash builds no double slash",
+      "client": {
+        "baseUrl": "https://api.test.com/"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/emails/stats"
+      },
+      "responses": [
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "url": "https://api.test.com/emails/stats",
+        "result": {
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "a GET that times out on every attempt raises the timeout error",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "timeout": true
+        },
+        {
+          "timeout": true
+        },
+        {
+          "timeout": true
+        }
+      ],
+      "expected": {
+        "calls": 3,
+        "error": {
+          "kind": "timeout"
+        }
+      }
+    },
+    {
+      "name": "a network error is a connection error, not a timeout",
+      "client": {
+        "retry": "none"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "network": true
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "connection",
+          "notKind": "timeout"
+        }
+      }
+    },
+    {
+      "name": "a normal id is sent unchanged",
+      "call": {
+        "operation": "emails.retrieve",
+        "args": [
+          "em_123"
+        ]
+      },
+      "expected": {
+        "calls": 1,
+        "method": "GET",
+        "path": "/emails/em_123"
+      }
+    },
+    {
+      "name": "an id of three dots is not a dot segment and is sent unchanged",
+      "call": {
+        "operation": "emails.retrieve",
+        "args": [
+          "..."
+        ]
+      },
+      "expected": {
+        "calls": 1,
+        "method": "GET",
+        "path": "/emails/..."
+      }
+    },
+    {
+      "name": "an empty id is rejected before sending",
+      "call": {
+        "operation": "emails.retrieve",
+        "args": [
+          ""
+        ]
+      },
+      "expected": {
+        "calls": 0,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "a . id is rejected before sending",
+      "call": {
+        "operation": "emails.retrieve",
+        "args": [
+          "."
+        ]
+      },
+      "expected": {
+        "calls": 0,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "a .. id is rejected before sending",
+      "call": {
+        "operation": "emails.retrieve",
+        "args": [
+          ".."
+        ]
+      },
+      "expected": {
+        "calls": 0,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "a missing id is rejected before sending",
+      "call": {
+        "operation": "emails.retrieve",
+        "args": [
+          null
+        ]
+      },
+      "expected": {
+        "calls": 0,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "a .. contact id is rejected before it removes the whole segment",
+      "call": {
+        "operation": "contacts.segments.remove",
+        "args": [
+          "..",
+          "seg_123"
+        ]
+      },
+      "expected": {
+        "calls": 0,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "an empty second id is rejected before sending",
+      "call": {
+        "operation": "contacts.segments.remove",
+        "args": [
+          "ct_123",
+          ""
+        ]
+      },
+      "expected": {
+        "calls": 0,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "normal ids on a nested route are sent unchanged",
+      "call": {
+        "operation": "contacts.segments.remove",
+        "args": [
+          "ct_123",
+          "seg_123"
+        ]
+      },
+      "expected": {
+        "calls": 1,
+        "method": "DELETE",
+        "path": "/contacts/ct_123/segments/seg_123"
+      }
+    },
+    {
+      "name": "a .. id in safe mode resolves to the SDK error instead of rejecting",
+      "runtimes": [
+        "typescript"
+      ],
+      "reason": "Java has no safe mode",
+      "call": {
+        "operation": "contacts.segments.remove",
+        "args": [
+          "..",
+          "seg_123"
+        ],
+        "safe": true
+      },
+      "expected": {
+        "calls": 0,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "the API key is in no string form, hook argument or log line of a retried call",
+      "client": {
+        "apiKey": "ntly_conformance_key_7d41a9c2",
+        "debug": true
+      },
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "sentAuthorization": "Bearer ntly_conformance_key_7d41a9c2",
+        "apiKeyHidden": true,
+        "result": {
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "the API key is in no string form, hook argument, log line or error of a failed call",
+      "client": {
+        "apiKey": "ntly_conformance_key_7d41a9c2",
+        "debug": true,
+        "retry": "none"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 401,
+          "body": {
+            "error": {
+              "status": 401,
+              "code": "unauthorized",
+              "title": "Invalid API key"
+            }
+          }
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "sentAuthorization": "Bearer ntly_conformance_key_7d41a9c2",
+        "apiKeyHidden": true,
+        "error": {
+          "kind": "authentication",
+          "status": 401
+        }
+      }
+    },
+    {
+      "name": "the API key is in no hook argument, log line or error of a network failure",
+      "client": {
+        "apiKey": "ntly_conformance_key_7d41a9c2",
+        "debug": true,
+        "retry": "none"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "network": true
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "sentAuthorization": "Bearer ntly_conformance_key_7d41a9c2",
+        "apiKeyHidden": true,
+        "error": {
+          "kind": "connection"
+        }
+      }
+    },
+    {
+      "name": "a base URL with several trailing slashes builds no double slash",
+      "client": {
+        "baseUrl": "https://api.test.com///"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/emails/stats"
+      },
+      "responses": [
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "url": "https://api.test.com/emails/stats",
+        "result": {
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "a list query value is sent as repeated keys",
+      "call": {
+        "operation": "messages.content.retrieve",
+        "args": [
+          "msg_123"
+        ],
+        "query": {
+          "format": [
+            "html",
+            "text"
+          ]
+        }
+      },
+      "expected": {
+        "calls": 1,
+        "method": "GET",
+        "path": "/messages/msg_123/content",
+        "query": "format=html&format=text"
+      }
+    },
+    {
+      "name": "an empty list query value is rejected before sending",
+      "call": {
+        "operation": "messages.content.retrieve",
+        "args": [
+          "msg_123"
+        ],
+        "query": {
+          "format": []
+        }
+      },
+      "expected": {
+        "calls": 0,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "a null element in a list query value is rejected before sending",
+      "call": {
+        "operation": "messages.content.retrieve",
+        "args": [
+          "msg_123"
+        ],
+        "query": {
+          "format": [
+            "html",
+            null
+          ]
+        }
+      },
+      "expected": {
+        "calls": 0,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "a client timeout of 0 sets no timeout",
+      "client": {
+        "timeoutMs": 0
+      },
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "result": {
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "a per-request timeout of 0 sets no timeout",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1",
+        "timeoutMs": 0
+      },
+      "responses": [
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "result": {
+          "status": 200
+        }
+      }
+    },
+    {
+      "name": "a negative client timeout is an SDK error before any request",
+      "client": {
+        "timeoutMs": -1
+      },
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [],
+      "expected": {
+        "calls": 0,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "a negative per-request timeout refuses the call before sending",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1",
+        "timeoutMs": -1
+      },
+      "responses": [],
+      "expected": {
+        "calls": 0,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    }
+  ]
+}
