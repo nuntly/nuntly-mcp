@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CreateContactRequest, CursorPageParams, Nuntly, UpdateContactRequest } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { contactResponseOutput, idResponseOutput } from '../schemas.js';
 
 export function registerContactsTools(server: McpServer, nuntly: Nuntly): void {
   // POST /contacts
@@ -14,23 +15,12 @@ export function registerContactsTools(server: McpServer, nuntly: Nuntly): void {
         .object({
           email: z.string().describe('The contact email address. Stored lowercased and trimmed.'),
           properties: z
-            .record(z.string(), z.unknown())
+            .record(z.string(), z.union([z.string(), z.number()]).nullable())
             .describe('Contact properties keyed by name. A null value means not supplied.')
             .optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the contact.'),
-          email: z.string().describe('The contact email address. Stored lowercased and trimmed.'),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-          properties: z
-            .record(z.string(), z.unknown())
-            .describe("The contact's properties, keyed by property name.")
-            .optional(),
-        })
-        .passthrough(),
+      outputSchema: contactResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
@@ -55,11 +45,7 @@ export function registerContactsTools(server: McpServer, nuntly: Nuntly): void {
           contactId: z.string().describe('The contactId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true, destructiveHint: true },
     },
     async (args) => {
@@ -82,7 +68,13 @@ export function registerContactsTools(server: McpServer, nuntly: Nuntly): void {
       inputSchema: z
         .object({
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
@@ -123,18 +115,7 @@ export function registerContactsTools(server: McpServer, nuntly: Nuntly): void {
           contactId: z.string().describe('The contactId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the contact.'),
-          email: z.string().describe('The contact email address. Stored lowercased and trimmed.'),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-          properties: z
-            .record(z.string(), z.unknown())
-            .describe("The contact's properties, keyed by property name.")
-            .optional(),
-        })
-        .passthrough(),
+      outputSchema: contactResponseOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
@@ -159,16 +140,12 @@ export function registerContactsTools(server: McpServer, nuntly: Nuntly): void {
           contactId: z.string().describe('The contactId'),
           email: z.string().describe('The address cannot be changed.').optional(),
           properties: z
-            .record(z.string(), z.unknown())
+            .record(z.string(), z.union([z.string(), z.number()]).nullable())
             .describe('Contact properties keyed by name, matched exactly. A null value removes the property.')
             .optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {

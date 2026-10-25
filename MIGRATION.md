@@ -8,9 +8,13 @@ These changes can break a 1.x setup.
 
 A tool call with an argument the tool does not declare, at the top level or inside a nested object such as an attachment or a bulk email item, returns an error result that names the argument, and no request reaches the API. 1.x dropped the argument and ran the call without it: `send-email` with `scheduled_at` instead of `scheduledAt` sent the email at once. Use the argument names that `tools/list` returns.
 
+### `limit` takes an integer from 1 to 30
+
+The `limit` argument of every list tool refuses a value that is not an integer from 1 to 30, and no request reaches the API. 1.x passed any number to the API, which refuses a value outside that range.
+
 ### `retrieve-thread` asks before it runs
 
-`retrieve-thread` no longer carries `readOnlyHint: true`, since `markRead: 'true'` removes the unread labels. A client that runs read-only tools without asking now asks before calling it. Its `markRead` takes `'true'` or `'false'` only.
+`retrieve-thread` no longer carries `readOnlyHint: true`, since `markRead: 'true'` removes the unread labels. It carries `destructiveHint: false` and `idempotentHint: true` instead. A client that runs read-only tools without asking now asks before calling it. Its `markRead` takes `'true'` or `'false'` only.
 
 ### Keep a single `@nuntly/sdk` copy for `registerTools`
 
@@ -38,8 +42,6 @@ Every tool name is now the name its SDK method implies: `nuntly.emails.bulk.send
 | `update-contact-property-definition` | `update-contact-property` | no |
 | `delete-contact-property-definition` | `delete-contact-property` | no |
 | `list-topic-membership-exceptions` | `list-topic-memberships` | no |
-
-`retrieve-contact-property`, `update-contact-property` and `delete-contact-property` take `contactPropertyId` instead of `propertyDefinitionId`.
 
 Update every place that names a tool: an MCP client allowlist or permission rule (for example an `allowedTools` entry), and a prompt or agent configuration that names a tool.
 

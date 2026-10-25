@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CursorPageParams, Nuntly } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { organizationResponseOutput } from '../schemas.js';
 
 export function registerOrganizationsTools(server: McpServer, nuntly: Nuntly): void {
   // GET /organizations
@@ -14,20 +15,18 @@ export function registerOrganizationsTools(server: McpServer, nuntly: Nuntly): v
       inputSchema: z
         .object({
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
         .object({
-          data: z.array(
-            z
-              .object({
-                id: z.string().describe('The id of the organization'),
-                name: z.string().describe('The name of the organization'),
-                status: z.enum(['enabled', 'disabled']).or(z.string()).describe('The status of the organization'),
-              })
-              .passthrough(),
-          ),
+          data: z.array(organizationResponseOutput()),
           nextCursor: z.string().nullable().optional(),
         })
         .passthrough(),
@@ -55,13 +54,7 @@ export function registerOrganizationsTools(server: McpServer, nuntly: Nuntly): v
           id: z.string().describe('The organization ID'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the organization'),
-          name: z.string().describe('The name of the organization'),
-          status: z.enum(['enabled', 'disabled']).or(z.string()).describe('The status of the organization'),
-        })
-        .passthrough(),
+      outputSchema: organizationResponseOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {

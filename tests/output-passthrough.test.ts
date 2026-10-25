@@ -84,4 +84,30 @@ describe('MCP output passthrough', () => {
     const inputs = tools.flatMap(t => objectsOf(t.inputSchema as JsonSchema)).filter(i => Object.keys(i.properties!).length);
     for (const i of inputs) expect(i.additionalProperties).toBe(false);
   });
+
+  it('declares an output schema on every tool, retrieve-template-version-content included', async () => {
+    const content = {
+      html: { status: 'available', downloadUrl: 'https://files.acme.com/v.html', expiresAt: '2026-10-21T00:02:00Z' },
+      text: { status: 'absent' },
+    };
+    const { client, tools } = await connect(content);
+
+    for (const t of tools) expect(t.outputSchema, t.name).toBeDefined();
+    const result = await client.callTool({
+      name: 'retrieve-template-version-content',
+      arguments: { templateId: 'tpl_1', versionId: 'tv_1' },
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual(content);
+  });
+
+  it('advertises every schema inline, with no $ref', async () => {
+    const { tools } = await connect({});
+
+    for (const t of tools) {
+      expect(JSON.stringify(t.inputSchema), t.name).not.toContain('$ref');
+      expect(JSON.stringify(t.outputSchema), t.name).not.toContain('$ref');
+    }
+  });
 });

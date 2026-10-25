@@ -2,6 +2,12 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CreateDomainRequest, CursorPageParams, Nuntly, UpdateDomainRequest } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import {
+  domainReceivingStatusOutput,
+  domainRecordsResponseOutput,
+  domainSendingStatusOutput,
+  domainStatusOutput,
+} from '../schemas.js';
 
 export function registerDomainsTools(server: McpServer, nuntly: Nuntly): void {
   // POST /domains
@@ -18,51 +24,7 @@ export function registerDomainsTools(server: McpServer, nuntly: Nuntly): void {
           receiving: z.boolean().describe('Enable receiving').optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the domain'),
-          name: z.string().describe("The name of the domain to send e-mails'"),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          status: z
-            .enum(['bootstrapping', 'pending', 'success', 'failed', 'temporary_failure'])
-            .or(z.string())
-            .describe('The status for the domain'),
-          region: z.enum(['eu-west-1']).or(z.string()).describe('The region of the domain data'),
-          statusAt: z.string().describe('The date of the lastest verification of this record'),
-          sending: z.boolean().describe('Whether sending is enabled for the domain'),
-          receiving: z.boolean().describe('Whether receiving is enabled for the domain'),
-          sendingStatus: z
-            .enum(['enabled', 'disabled', 'paused'])
-            .or(z.string())
-            .describe('The sending status for the domain'),
-          sendingStatusAt: z.string().describe('The date of the latest sending status change'),
-          receivingStatus: z
-            .enum(['disabled', 'bootstrapping', 'pending', 'active', 'failed'])
-            .or(z.string())
-            .describe('The receiving status for the domain'),
-          receivingStatusAt: z.string().describe('The date of the latest receiving status change'),
-          openTracking: z.boolean().describe('Emit an event for each recipient opens an email their email client'),
-          clickTracking: z.boolean().describe('Emit an event for each time the recipient clicks a link in the email'),
-          records: z
-            .array(
-              z
-                .object({
-                  name: z.string(),
-                  fullname: z.string(),
-                  recordType: z.enum(['TXT', 'MX', 'CNAME']).or(z.string()),
-                  ttl: z.string(),
-                  group: z.enum(['DKIM', 'SPF', 'MX', 'DMARC', 'MX_RECEIVING']).or(z.string()),
-                  selector: z.string().optional(),
-                  priority: z.string().optional(),
-                  value: z.string(),
-                  status: z.enum(['bootstrapping', 'pending', 'success', 'failed', 'temporary_failure']).or(z.string()),
-                  statusAt: z.string(),
-                })
-                .passthrough(),
-            )
-            .describe('The DNS records for your domain.'),
-        })
-        .passthrough(),
+      outputSchema: domainRecordsResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
@@ -116,7 +78,13 @@ export function registerDomainsTools(server: McpServer, nuntly: Nuntly): void {
       inputSchema: z
         .object({
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
@@ -126,18 +94,9 @@ export function registerDomainsTools(server: McpServer, nuntly: Nuntly): void {
               .object({
                 id: z.string().describe('The id of the domain'),
                 name: z.string().describe("The name of the domain to send e-mails'"),
-                status: z
-                  .enum(['bootstrapping', 'pending', 'success', 'failed', 'temporary_failure'])
-                  .or(z.string())
-                  .describe('The status for the domain'),
-                sendingStatus: z
-                  .enum(['enabled', 'disabled', 'paused'])
-                  .or(z.string())
-                  .describe('The sending status for the domain'),
-                receivingStatus: z
-                  .enum(['disabled', 'bootstrapping', 'pending', 'active', 'failed'])
-                  .or(z.string())
-                  .describe('The receiving status for the domain'),
+                status: domainStatusOutput().describe('The status for the domain'),
+                sendingStatus: domainSendingStatusOutput().describe('The sending status for the domain'),
+                receivingStatus: domainReceivingStatusOutput().describe('The receiving status for the domain'),
                 createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
                 region: z.enum(['eu-west-1']).or(z.string()).describe('The region of the domain data'),
               })
@@ -170,51 +129,7 @@ export function registerDomainsTools(server: McpServer, nuntly: Nuntly): void {
           id: z.string().describe('The domain ID'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the domain'),
-          name: z.string().describe("The name of the domain to send e-mails'"),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          status: z
-            .enum(['bootstrapping', 'pending', 'success', 'failed', 'temporary_failure'])
-            .or(z.string())
-            .describe('The status for the domain'),
-          region: z.enum(['eu-west-1']).or(z.string()).describe('The region of the domain data'),
-          statusAt: z.string().describe('The date of the lastest verification of this record'),
-          sending: z.boolean().describe('Whether sending is enabled for the domain'),
-          receiving: z.boolean().describe('Whether receiving is enabled for the domain'),
-          sendingStatus: z
-            .enum(['enabled', 'disabled', 'paused'])
-            .or(z.string())
-            .describe('The sending status for the domain'),
-          sendingStatusAt: z.string().describe('The date of the latest sending status change'),
-          receivingStatus: z
-            .enum(['disabled', 'bootstrapping', 'pending', 'active', 'failed'])
-            .or(z.string())
-            .describe('The receiving status for the domain'),
-          receivingStatusAt: z.string().describe('The date of the latest receiving status change'),
-          openTracking: z.boolean().describe('Emit an event for each recipient opens an email their email client'),
-          clickTracking: z.boolean().describe('Emit an event for each time the recipient clicks a link in the email'),
-          records: z
-            .array(
-              z
-                .object({
-                  name: z.string(),
-                  fullname: z.string(),
-                  recordType: z.enum(['TXT', 'MX', 'CNAME']).or(z.string()),
-                  ttl: z.string(),
-                  group: z.enum(['DKIM', 'SPF', 'MX', 'DMARC', 'MX_RECEIVING']).or(z.string()),
-                  selector: z.string().optional(),
-                  priority: z.string().optional(),
-                  value: z.string(),
-                  status: z.enum(['bootstrapping', 'pending', 'success', 'failed', 'temporary_failure']).or(z.string()),
-                  statusAt: z.string(),
-                })
-                .passthrough(),
-            )
-            .describe('The DNS records for your domain.'),
-        })
-        .passthrough(),
+      outputSchema: domainRecordsResponseOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {

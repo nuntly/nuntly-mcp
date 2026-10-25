@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CreateContactPropertyRequest, CursorPageParams, Nuntly, UpdateContactPropertyRequest } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { contactPropertyResponseOutput, idResponseOutput } from '../schemas.js';
 
 export function registerContactPropertiesTools(server: McpServer, nuntly: Nuntly): void {
   // POST /contact-properties
@@ -26,24 +27,7 @@ export function registerContactPropertiesTools(server: McpServer, nuntly: Nuntly
             .optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the contact property.'),
-          name: z
-            .string()
-            .describe(
-              "A name for the property, used as its key in a contact's properties. Stored trimmed, with the letter case it was typed with.",
-            ),
-          type: z
-            .enum(['string', 'number'])
-            .or(z.string())
-            .describe('The declared type of the property. Immutable after creation.'),
-          description: z.string().nullable().describe('An optional description of the property.').optional(),
-          defaultValue: z.union([z.string(), z.number()]).optional(),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-        })
-        .passthrough(),
+      outputSchema: contactPropertyResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
@@ -68,11 +52,7 @@ export function registerContactPropertiesTools(server: McpServer, nuntly: Nuntly
           contactPropertyId: z.string().describe('The contactPropertyId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true, destructiveHint: true },
     },
     async (args) => {
@@ -95,31 +75,18 @@ export function registerContactPropertiesTools(server: McpServer, nuntly: Nuntly
       inputSchema: z
         .object({
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
         .object({
-          data: z.array(
-            z
-              .object({
-                id: z.string().describe('The id of the contact property.'),
-                name: z
-                  .string()
-                  .describe(
-                    "A name for the property, used as its key in a contact's properties. Stored trimmed, with the letter case it was typed with.",
-                  ),
-                type: z
-                  .enum(['string', 'number'])
-                  .or(z.string())
-                  .describe('The declared type of the property. Immutable after creation.'),
-                description: z.string().nullable().describe('An optional description of the property.').optional(),
-                defaultValue: z.union([z.string(), z.number()]).optional(),
-                createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-                updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-              })
-              .passthrough(),
-          ),
+          data: z.array(contactPropertyResponseOutput()),
           nextCursor: z.string().nullable().optional(),
         })
         .passthrough(),
@@ -149,24 +116,7 @@ export function registerContactPropertiesTools(server: McpServer, nuntly: Nuntly
           contactPropertyId: z.string().describe('The contactPropertyId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the contact property.'),
-          name: z
-            .string()
-            .describe(
-              "A name for the property, used as its key in a contact's properties. Stored trimmed, with the letter case it was typed with.",
-            ),
-          type: z
-            .enum(['string', 'number'])
-            .or(z.string())
-            .describe('The declared type of the property. Immutable after creation.'),
-          description: z.string().nullable().describe('An optional description of the property.').optional(),
-          defaultValue: z.union([z.string(), z.number()]).optional(),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-        })
-        .passthrough(),
+      outputSchema: contactPropertyResponseOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
@@ -193,11 +143,7 @@ export function registerContactPropertiesTools(server: McpServer, nuntly: Nuntly
           defaultValue: z.union([z.string(), z.number()]).nullable().optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {

@@ -7,7 +7,13 @@ import type {
   UpdateTemplateRequest,
 } from '@nuntly/sdk';
 import { z } from 'zod';
-import { formatError, formatResult, formatStructuredResult } from '../helpers.js';
+import { formatError, formatStructuredResult } from '../helpers.js';
+import {
+  contentOutcomeOutput,
+  idResponseOutput,
+  templateResponseOutput,
+  templateVersionResponseOutput,
+} from '../schemas.js';
 
 export function registerTemplatesTools(server: McpServer, nuntly: Nuntly): void {
   // POST /templates
@@ -21,15 +27,7 @@ export function registerTemplatesTools(server: McpServer, nuntly: Nuntly): void 
           name: z.string().describe('A name for the template, shown only to your team.'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the template.'),
-          name: z.string().describe('A name for the template, shown only to your team.'),
-          status: z.enum(['draft', 'published']).or(z.string()).describe('The lifecycle state of the template.'),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-        })
-        .passthrough(),
+      outputSchema: templateResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
@@ -72,32 +70,7 @@ export function registerTemplatesTools(server: McpServer, nuntly: Nuntly): void 
             .optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the content version.'),
-          templateId: z.string().describe('The id of the template.'),
-          status: z.enum(['draft', 'active']).or(z.string()).describe('The lifecycle state of the content version.'),
-          subject: z.string(),
-          publishedAt: z.string().describe('Date at which this version was published.').optional(),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-          variables: z
-            .array(
-              z
-                .object({
-                  name: z.string().describe('The variable name, case-sensitive.'),
-                  type: z.enum(['string', 'number', 'boolean']).or(z.string()).describe('The variable type.'),
-                  default: z
-                    .union([z.string(), z.number(), z.boolean()])
-                    .describe('Used when a broadcast sets no value.')
-                    .optional(),
-                })
-                .passthrough(),
-            )
-            .describe('The declared variables.')
-            .optional(),
-        })
-        .passthrough(),
+      outputSchema: templateVersionResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {
@@ -123,11 +96,7 @@ export function registerTemplatesTools(server: McpServer, nuntly: Nuntly): void 
           templateId: z.string().describe('The templateId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true, destructiveHint: true },
     },
     async (args) => {
@@ -151,42 +120,18 @@ export function registerTemplatesTools(server: McpServer, nuntly: Nuntly): void 
         .object({
           templateId: z.string().describe('The templateId'),
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
         .object({
-          data: z.array(
-            z
-              .object({
-                id: z.string().describe('The id of the content version.'),
-                templateId: z.string().describe('The id of the template.'),
-                status: z
-                  .enum(['draft', 'active'])
-                  .or(z.string())
-                  .describe('The lifecycle state of the content version.'),
-                subject: z.string(),
-                publishedAt: z.string().describe('Date at which this version was published.').optional(),
-                createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-                updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-                variables: z
-                  .array(
-                    z
-                      .object({
-                        name: z.string().describe('The variable name, case-sensitive.'),
-                        type: z.enum(['string', 'number', 'boolean']).or(z.string()).describe('The variable type.'),
-                        default: z
-                          .union([z.string(), z.number(), z.boolean()])
-                          .describe('Used when a broadcast sets no value.')
-                          .optional(),
-                      })
-                      .passthrough(),
-                  )
-                  .describe('The declared variables.')
-                  .optional(),
-              })
-              .passthrough(),
-          ),
+          data: z.array(templateVersionResponseOutput()),
           nextCursor: z.string().nullable().optional(),
         })
         .passthrough(),
@@ -215,22 +160,18 @@ export function registerTemplatesTools(server: McpServer, nuntly: Nuntly): void 
       inputSchema: z
         .object({
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
         .object({
-          data: z.array(
-            z
-              .object({
-                id: z.string().describe('The id of the template.'),
-                name: z.string().describe('A name for the template, shown only to your team.'),
-                status: z.enum(['draft', 'published']).or(z.string()).describe('The lifecycle state of the template.'),
-                createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-                updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-              })
-              .passthrough(),
-          ),
+          data: z.array(templateResponseOutput()),
           nextCursor: z.string().nullable().optional(),
         })
         .passthrough(),
@@ -289,15 +230,7 @@ export function registerTemplatesTools(server: McpServer, nuntly: Nuntly): void 
           templateId: z.string().describe('The templateId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the template.'),
-          name: z.string().describe('A name for the template, shown only to your team.'),
-          status: z.enum(['draft', 'published']).or(z.string()).describe('The lifecycle state of the template.'),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-        })
-        .passthrough(),
+      outputSchema: templateResponseOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
@@ -323,32 +256,7 @@ export function registerTemplatesTools(server: McpServer, nuntly: Nuntly): void 
           versionId: z.string().describe('The versionId'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the content version.'),
-          templateId: z.string().describe('The id of the template.'),
-          status: z.enum(['draft', 'active']).or(z.string()).describe('The lifecycle state of the content version.'),
-          subject: z.string(),
-          publishedAt: z.string().describe('Date at which this version was published.').optional(),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-          updatedAt: z.string().describe('Date at which the object was updated (ISO 8601 format)'),
-          variables: z
-            .array(
-              z
-                .object({
-                  name: z.string().describe('The variable name, case-sensitive.'),
-                  type: z.enum(['string', 'number', 'boolean']).or(z.string()).describe('The variable type.'),
-                  default: z
-                    .union([z.string(), z.number(), z.boolean()])
-                    .describe('Used when a broadcast sets no value.')
-                    .optional(),
-                })
-                .passthrough(),
-            )
-            .describe('The declared variables.')
-            .optional(),
-        })
-        .passthrough(),
+      outputSchema: templateVersionResponseOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
@@ -375,6 +283,12 @@ export function registerTemplatesTools(server: McpServer, nuntly: Nuntly): void 
           versionId: z.string().describe('The versionId'),
         })
         .strict(),
+      outputSchema: z
+        .object({
+          html: contentOutcomeOutput(),
+          text: contentOutcomeOutput(),
+        })
+        .passthrough(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {
@@ -382,7 +296,7 @@ export function registerTemplatesTools(server: McpServer, nuntly: Nuntly): void 
         const templateId = String(args.templateId);
         const versionId = String(args.versionId);
         const result = await nuntly.templates.versions.content.retrieve(templateId, versionId);
-        return formatResult(result);
+        return formatStructuredResult(result);
       } catch (error) {
         return formatError(error);
       }
@@ -401,11 +315,7 @@ export function registerTemplatesTools(server: McpServer, nuntly: Nuntly): void 
           name: z.string().describe('A name for the template, shown only to your team.').optional(),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the resource.'),
-        })
-        .passthrough(),
+      outputSchema: idResponseOutput(),
       annotations: { openWorldHint: true },
     },
     async (args) => {

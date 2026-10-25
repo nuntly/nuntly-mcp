@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CreateApiKeyRequest, CursorPageParams, Nuntly, UpdateApiKeyRequest } from '@nuntly/sdk';
 import { z } from 'zod';
 import { formatError, formatStructuredResult } from '../helpers.js';
+import { apiKeyResponseOutput, apiKeyStatusOutput } from '../schemas.js';
 
 export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
   // POST /api-keys
@@ -28,7 +29,7 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
           name: z.string().describe('The name of the api key').optional(),
           apiKey: z.string().describe('The content of the api key'),
           shortToken: z.string().describe('The last 6 characters of the api key token'),
-          status: z.enum(['enabled', 'disabled', 'revoked']).or(z.string()).describe('The status for the api key'),
+          status: apiKeyStatusOutput().describe('The status for the api key'),
         })
         .passthrough(),
       annotations: { openWorldHint: true },
@@ -84,25 +85,18 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
       inputSchema: z
         .object({
           cursor: z.string().describe('Pagination cursor from a previous response').optional(),
-          limit: z.number().describe('Maximum number of items to return').optional(),
+          limit: z
+            .number()
+            .int()
+            .min(1)
+            .max(30)
+            .describe('The maximum number of results to return, from 1 to 30. Defaults to 30.')
+            .optional(),
         })
         .strict(),
       outputSchema: z
         .object({
-          data: z.array(
-            z
-              .object({
-                id: z.string().describe('The id of the api key'),
-                name: z.string().describe('The name of the api key').optional(),
-                shortToken: z.string().describe('The last 6 characters of the api key token'),
-                status: z
-                  .enum(['enabled', 'disabled', 'revoked'])
-                  .or(z.string())
-                  .describe('The status for the api key'),
-                createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-              })
-              .passthrough(),
-          ),
+          data: z.array(apiKeyResponseOutput()),
           nextCursor: z.string().nullable().optional(),
         })
         .passthrough(),
@@ -130,15 +124,7 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
           id: z.string().describe('The api key ID'),
         })
         .strict(),
-      outputSchema: z
-        .object({
-          id: z.string().describe('The id of the api key'),
-          name: z.string().describe('The name of the api key').optional(),
-          shortToken: z.string().describe('The last 6 characters of the api key token'),
-          status: z.enum(['enabled', 'disabled', 'revoked']).or(z.string()).describe('The status for the api key'),
-          createdAt: z.string().describe('Date at which the object was created (ISO 8601 format)'),
-        })
-        .passthrough(),
+      outputSchema: apiKeyResponseOutput(),
       annotations: { openWorldHint: true, readOnlyHint: true },
     },
     async (args) => {

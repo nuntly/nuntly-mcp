@@ -10,10 +10,7 @@ export function formatResult(data: unknown) {
  * passes a value the SDK already typed as a plain JSON object.
  */
 export function formatStructuredResult(data: unknown) {
-  return {
-    content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
-    structuredContent: data as Record<string, unknown>,
-  };
+  return { ...formatResult(data), structuredContent: data as Record<string, unknown> };
 }
 
 /**
