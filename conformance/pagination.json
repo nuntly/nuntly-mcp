@@ -1,6 +1,61 @@
 {
-  "description": "Cursor pagination. Each case lists request.path with request.query, then either asks for the next page (action nextPage) or iterates every item (action iterate) over the scripted list responses served in order. expected.queries is the query each call sent; error.kind names the error type (see README.md).",
+  "description": "Cursor pagination. Each case lists request.path with request.query, then either asks for the next page (action nextPage) or iterates every item (action iterate) over the scripted list responses served in order. expected.queries is the query each call sent; expected.nextCursor is the next cursor the first page reports, null when it has none; error.kind names the error type (see README.md).",
   "cases": [
+    {
+      "name": "a last page without nextCursor reports a null next cursor",
+      "request": {
+        "path": "/emails",
+        "query": {}
+      },
+      "action": "nextPage",
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_1"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "nextCursor": null,
+        "error": {
+          "kind": "no_more_pages"
+        }
+      }
+    },
+    {
+      "name": "a last page with an empty nextCursor reports a null next cursor",
+      "request": {
+        "path": "/emails",
+        "query": {}
+      },
+      "action": "nextPage",
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_1"
+              }
+            ],
+            "nextCursor": ""
+          }
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "nextCursor": null,
+        "error": {
+          "kind": "no_more_pages"
+        }
+      }
+    },
     {
       "name": "the page after the last one fails without a request",
       "request": {
