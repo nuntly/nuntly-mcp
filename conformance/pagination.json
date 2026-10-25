@@ -1,0 +1,309 @@
+{
+  "description": "Cursor pagination. Each case lists request.path with request.query, then either asks for the next page (action nextPage) or iterates every item (action iterate) over the scripted list responses served in order. expected.queries is the query each call sent; error.kind names the error type (see README.md).",
+  "cases": [
+    {
+      "name": "the page after the last one fails without a request",
+      "request": {
+        "path": "/emails",
+        "query": {
+          "cursor": "cur_1"
+        }
+      },
+      "action": "nextPage",
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_1"
+              }
+            ],
+            "nextCursor": null
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_1"
+              }
+            ],
+            "nextCursor": null
+          }
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "no_more_pages"
+        }
+      }
+    },
+    {
+      "name": "auto-pagination follows the cursor, keeps the page size and stops at the last page",
+      "request": {
+        "path": "/emails",
+        "query": {
+          "limit": "2"
+        }
+      },
+      "action": "iterate",
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_1"
+              },
+              {
+                "id": "em_2"
+              }
+            ],
+            "nextCursor": "cur_2"
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_3"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "ids": [
+          "em_1",
+          "em_2",
+          "em_3"
+        ],
+        "queries": [
+          {
+            "limit": "2"
+          },
+          {
+            "limit": "2",
+            "cursor": "cur_2"
+          }
+        ]
+      }
+    },
+    {
+      "name": "auto-pagination goes past an empty page that has a next cursor",
+      "request": {
+        "path": "/emails",
+        "query": {}
+      },
+      "action": "iterate",
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_1"
+              }
+            ],
+            "nextCursor": "cur_2"
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "data": [],
+            "nextCursor": "cur_3"
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_2"
+              }
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "calls": 3,
+        "ids": [
+          "em_1",
+          "em_2"
+        ],
+        "queries": [
+          {},
+          {
+            "cursor": "cur_2"
+          },
+          {
+            "cursor": "cur_3"
+          }
+        ]
+      }
+    },
+    {
+      "name": "auto-pagination stops with an SDK error when the API returns the same next cursor again",
+      "request": {
+        "path": "/emails",
+        "query": {}
+      },
+      "action": "iterate",
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_1"
+              }
+            ],
+            "nextCursor": "cur_2"
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_2"
+              }
+            ],
+            "nextCursor": "cur_2"
+          }
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "ids": [
+          "em_1",
+          "em_2"
+        ],
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "auto-pagination stops with an SDK error on a longer cursor cycle",
+      "request": {
+        "path": "/emails",
+        "query": {}
+      },
+      "action": "iterate",
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_1"
+              }
+            ],
+            "nextCursor": "cur_2"
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_2"
+              }
+            ],
+            "nextCursor": "cur_3"
+          }
+        },
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_3"
+              }
+            ],
+            "nextCursor": "cur_2"
+          }
+        }
+      ],
+      "expected": {
+        "calls": 3,
+        "ids": [
+          "em_1",
+          "em_2",
+          "em_3"
+        ],
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "the page after one whose next cursor is its own request cursor fails without a request",
+      "request": {
+        "path": "/emails",
+        "query": {
+          "cursor": "cur_1"
+        }
+      },
+      "action": "nextPage",
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_1"
+              }
+            ],
+            "nextCursor": "cur_1"
+          }
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    },
+    {
+      "name": "auto-pagination stops at once when the first next cursor is the starting cursor",
+      "request": {
+        "path": "/emails",
+        "query": {
+          "cursor": "cur_1"
+        }
+      },
+      "action": "iterate",
+      "responses": [
+        {
+          "status": 200,
+          "body": {
+            "data": [
+              {
+                "id": "em_1"
+              }
+            ],
+            "nextCursor": "cur_1"
+          }
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "ids": [
+          "em_1"
+        ],
+        "error": {
+          "kind": "sdk"
+        }
+      }
+    }
+  ]
+}

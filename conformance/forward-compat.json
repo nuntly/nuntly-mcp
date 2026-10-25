@@ -1,0 +1,49 @@
+{
+  "description": "Forward compatibility. Each case calls call.operation with call.args against one 200 response carrying response.body, then reads expected.field on the returned value. expected.value is the wire value the response carries and expected.known says whether this SDK version knows it: a known value reads as its enum member, an unknown one as the wire string in TypeScript and as UNKNOWN in Java, never null or an error.",
+  "cases": [
+    {
+      "name": "an enum value the SDK does not know reads as unknown",
+      "call": {
+        "operation": "emails.retrieve",
+        "args": [
+          "em_1"
+        ]
+      },
+      "response": {
+        "body": {
+          "data": {
+            "id": "em_1",
+            "status": "archived"
+          }
+        }
+      },
+      "expected": {
+        "field": "status",
+        "value": "archived",
+        "known": false
+      }
+    },
+    {
+      "name": "a known enum value reads as its member",
+      "call": {
+        "operation": "emails.retrieve",
+        "args": [
+          "em_1"
+        ]
+      },
+      "response": {
+        "body": {
+          "data": {
+            "id": "em_1",
+            "status": "delivered"
+          }
+        }
+      },
+      "expected": {
+        "field": "status",
+        "value": "delivered",
+        "known": true
+      }
+    }
+  ]
+}

@@ -16,7 +16,10 @@ export function registerApiKeysTools(server: McpServer, nuntly: Nuntly): void {
         .object({
           name: z.string().describe('The name of the api key').optional(),
           status: z.enum(['enabled', 'disabled', 'revoked']).describe('The status for the api key').optional(),
-          permission: z.enum(['fullAccess', 'sendingAccess']).describe('The permission type for the api key'),
+          permission: z
+            .enum(['fullAccess', 'sendingAccess'])
+            .describe('The permission type for the api key')
+            .optional(),
           domainIds: z
             .array(z.string())
             .describe('The domain ids to restrict the api key to (only for sendingAccess)')

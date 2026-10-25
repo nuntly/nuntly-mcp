@@ -1,0 +1,265 @@
+{
+  "description": "Webhook signature verification. input.now is the verifier clock in Unix seconds; toleranceSeconds defaults to the SDK default. The secrets are test values of no webhook. A reject outcome is the webhook verification error of the runtime (WebhookVerificationError in both).",
+  "cases": [
+    {
+      "name": "single signature, secret with its whsec_ prefix",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "accept",
+        "eventType": "email.delivered",
+        "eventId": "evt_01k8a1conformance"
+      }
+    },
+    {
+      "name": "single signature, secret without its prefix",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05",
+        "secret": "cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "accept",
+        "eventType": "email.delivered",
+        "eventId": "evt_01k8a1conformance"
+      }
+    },
+    {
+      "name": "rotation: two signatures, verified with the new secret",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05,76091866ba6e3dd7a4639fb5ce1af6eb564f75c4fbb7949493cf4a3d4fe241ce",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "accept",
+        "eventType": "email.delivered",
+        "eventId": "evt_01k8a1conformance"
+      }
+    },
+    {
+      "name": "rotation: two signatures, verified with the previous secret",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05,76091866ba6e3dd7a4639fb5ce1af6eb564f75c4fbb7949493cf4a3d4fe241ce",
+        "secret": "whsec_0ec939ea309e7719fde79a1cc4cc1419c5d41c8d9a1caaaaa53dce5712022b7f",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "accept",
+        "eventType": "email.delivered",
+        "eventId": "evt_01k8a1conformance"
+      }
+    },
+    {
+      "name": "rotation: no signature matches the secret",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05,76091866ba6e3dd7a4639fb5ce1af6eb564f75c4fbb7949493cf4a3d4fe241ce",
+        "secret": "whsec_837381e3db3650129530e0226c99d8e7bc7454c7941f256515ddd52e63a4a997",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "reject"
+      }
+    },
+    {
+      "name": "payload changed after signing",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"john@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "reject"
+      }
+    },
+    {
+      "name": "timestamp exactly at the tolerance in the past",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300300
+      },
+      "expected": {
+        "outcome": "accept",
+        "eventType": "email.delivered",
+        "eventId": "evt_01k8a1conformance"
+      }
+    },
+    {
+      "name": "timestamp past the tolerance",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300301
+      },
+      "expected": {
+        "outcome": "reject"
+      }
+    },
+    {
+      "name": "timestamp in the future within the tolerance (clock skew)",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761299940
+      },
+      "expected": {
+        "outcome": "accept",
+        "eventType": "email.delivered",
+        "eventId": "evt_01k8a1conformance"
+      }
+    },
+    {
+      "name": "timestamp in the future past the tolerance",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761299699
+      },
+      "expected": {
+        "outcome": "reject"
+      }
+    },
+    {
+      "name": "custom tolerance shorter than the age",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300060,
+        "toleranceSeconds": 30
+      },
+      "expected": {
+        "outcome": "reject"
+      }
+    },
+    {
+      "name": "custom tolerance longer than the age",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300060,
+        "toleranceSeconds": 120
+      },
+      "expected": {
+        "outcome": "accept",
+        "eventType": "email.delivered",
+        "eventId": "evt_01k8a1conformance"
+      }
+    },
+    {
+      "name": "event type unknown to the SDK",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"id\":\"em_01k8a1conformance\"},\"id\":\"evt_01k8a1conformance2\",\"type\":\"email.archived\"}",
+        "header": "t=1761300000,v0=8d35e42622d174d3a3dc3f79ee020d35ca876e9e1e20c820164d7ad84174a39d",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "accept",
+        "eventType": "email.archived",
+        "eventId": "evt_01k8a1conformance2"
+      }
+    },
+    {
+      "name": "raw timestamp string is signed as sent",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=01761300000,v0=005e071bbfec08fa13cdb8c87d123d0c933fc883dd3e7c9fc92b1273442047d3",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "accept",
+        "eventType": "email.delivered",
+        "eventId": "evt_01k8a1conformance"
+      }
+    },
+    {
+      "name": "timestamp whose age overflows a 64-bit subtraction",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=-9223372035093475808,v0=220a5bfd2b592f5d9544f382f5161098c1983e0bd7beab64e8bb8dbdfd7dba1e",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "reject"
+      }
+    },
+    {
+      "name": "empty header",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "reject"
+      }
+    },
+    {
+      "name": "header without a timestamp",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "v0=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "reject"
+      }
+    },
+    {
+      "name": "header without a v0 signature",
+      "input": {
+        "payload": "{\"createdAt\":\"2025-10-24T10:00:00.000Z\",\"data\":{\"delivery\":{\"deliveredAt\":\"2025-10-24T09:59:59.000Z\",\"recipients\":[\"jane@example.org\"],\"remoteMtaIp\":\"192.0.2.10\",\"reportingMta\":\"a1-2.smtp-out.eu-west-1.amazonses.com\",\"smtpResponse\":\"250 2.0.0 OK\"},\"domainId\":\"dom_01k8a1conformance\",\"domainName\":\"example.com\",\"enqueuedAt\":\"2025-10-24T09:59:57.000Z\",\"from\":\"Acme \\u003chello@example.com\\u003e\",\"id\":\"em_01k8a1conformance\",\"messageId\":\"0102019a1b2c3d4e-conformance-000000\",\"orgId\":\"org_01k8a1conformance\",\"sentAt\":\"2025-10-24T09:59:58.000Z\",\"subject\":\"Café \\u0026 \\u003cb\\u003ebold\\u003c/b\\u003e receipts\",\"to\":[\"jane@example.org\"]},\"id\":\"evt_01k8a1conformance\",\"type\":\"email.delivered\"}",
+        "header": "t=1761300000,v1=55d75680c14061575c3dfb5fb83f961a5752ea851d816a39bae6c1b560b84c05",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "reject"
+      }
+    },
+    {
+      "name": "correctly signed payload that is not JSON",
+      "input": {
+        "payload": "not a json payload",
+        "header": "t=1761300000,v0=bd07ccf532285a228f54136d55dbaa3151b89d2c8f60631ea7ef3b376376da33",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "reject"
+      }
+    },
+    {
+      "name": "correctly signed JSON payload that is not an object",
+      "input": {
+        "payload": "[\"email.delivered\"]",
+        "header": "t=1761300000,v0=25fb81e03aee46f94981584471ca98d6e6a437f75879cf2a291d0ba617988ca1",
+        "secret": "whsec_cd35801e9442bfa289efd0b0f55fed6831a18720ea90ce1279a1c728f8edbb34",
+        "now": 1761300000
+      },
+      "expected": {
+        "outcome": "reject"
+      }
+    }
+  ]
+}

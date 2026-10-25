@@ -138,7 +138,12 @@ export function registerContactsTools(server: McpServer, nuntly: Nuntly): void {
       inputSchema: z
         .object({
           contactId: z.string().describe('The contactId'),
-          email: z.string().describe('The address cannot be changed.').optional(),
+          email: z
+            .string()
+            .describe(
+              "The contact's current address, in any letter case. The address cannot be changed: a different address is refused with the error code contact_email_immutable.",
+            )
+            .optional(),
           properties: z
             .record(z.string(), z.union([z.string(), z.number()]).nullable())
             .describe('Contact properties keyed by name, matched exactly. A null value removes the property.')

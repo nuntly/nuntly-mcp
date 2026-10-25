@@ -1,0 +1,1751 @@
+{
+  "description": "Retry decisions. Each case runs one request against the scripted responses in order: {status, headers?, body?, abortAfter?}, {network: true}, {timeout: true} (the SDK timeout) or {callerTimeout: true} (the signal of the caller times out). request.idempotencyKey is an Idempotency-Key header the caller sets; request.idempotent marks an operation the API deduplicates by that key, as the SDK methods for it do. client and request options default to the SDK defaults; delaysMs bounds each wait in order; error.kind names the error type (see README.md). expected.hookSequence is the order of the hook calls: onRequest before every attempt, onRetry before each retry, onResponse once on the final response (none when the last attempt got no response), then onSuccess on a 2xx or onError; a hook that throws ends it.",
+  "cases": [
+    {
+      "name": "GET 408 is retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 408
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "GET 429 is retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 429
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "GET 500 is retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 500
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "GET 502 is retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 502
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "GET 503 is retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "GET 504 is retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 504
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "GET 400 is not retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 400
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "bad_request",
+          "status": 400
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "GET 401 is not retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 401
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "authentication",
+          "status": 401
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "GET 403 is not retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 403
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "permission_denied",
+          "status": 403
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "GET 404 is not retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 404
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "not_found",
+          "status": 404
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "GET 409 is not retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 409
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "conflict",
+          "status": 409
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "GET 422 is not retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 422
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "unprocessable_entity",
+          "status": 422
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "GET 501 is not retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 501
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "internal_server",
+          "status": 501
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "retries stop at the default maximum of 2",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503
+        },
+        {
+          "status": 503
+        },
+        {
+          "status": 503
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 3,
+        "delaysMs": [
+          [
+            375,
+            500
+          ],
+          [
+            750,
+            1000
+          ]
+        ],
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "per-request maxRetries raises the maximum",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1",
+        "maxRetries": 3
+      },
+      "responses": [
+        {
+          "status": 503
+        },
+        {
+          "status": 503
+        },
+        {
+          "status": 503
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 4,
+        "delaysMs": [
+          [
+            375,
+            500
+          ],
+          [
+            750,
+            1000
+          ],
+          [
+            1500,
+            2000
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "per-request maxRetries 0 disables retries",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1",
+        "maxRetries": 0
+      },
+      "responses": [
+        {
+          "status": 503
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "a network error on a GET is retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "network": true
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "a timeout on a GET is retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "timeout": true
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "unkeyed POST 503 is not retried",
+      "request": {
+        "method": "POST",
+        "path": "/domains",
+        "body": {
+          "name": "example.com"
+        }
+      },
+      "responses": [
+        {
+          "status": 503
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "unkeyed POST network error is not retried",
+      "request": {
+        "method": "POST",
+        "path": "/domains",
+        "body": {
+          "name": "example.com"
+        }
+      },
+      "responses": [
+        {
+          "network": true
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "connection"
+        },
+        "hookSequence": [
+          "onRequest",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "unkeyed POST timeout is not retried",
+      "request": {
+        "method": "POST",
+        "path": "/domains",
+        "body": {
+          "name": "example.com"
+        }
+      },
+      "responses": [
+        {
+          "timeout": true
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "timeout"
+        },
+        "hookSequence": [
+          "onRequest",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "unkeyed POST 429 is retried",
+      "request": {
+        "method": "POST",
+        "path": "/domains",
+        "body": {
+          "name": "example.com"
+        }
+      },
+      "responses": [
+        {
+          "status": 429
+        },
+        {
+          "status": 201
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 201
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "keyed idempotent POST 503 is retried with the same key",
+      "request": {
+        "method": "POST",
+        "path": "/emails",
+        "body": {
+          "from": "hello@example.com",
+          "to": "jane@example.org",
+          "subject": "Hi",
+          "text": "Hi"
+        },
+        "idempotencyKey": "conformance-key-0001",
+        "idempotent": true
+      },
+      "responses": [
+        {
+          "status": 503
+        },
+        {
+          "status": 202
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "sameIdempotencyKey": true,
+        "result": {
+          "status": 202
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "a caller key on a POST the API does not deduplicate does not make a 503 retried",
+      "request": {
+        "method": "POST",
+        "path": "/domains",
+        "body": {
+          "name": "example.com"
+        },
+        "idempotencyKey": "conformance-key-0002"
+      },
+      "responses": [
+        {
+          "status": 503
+        },
+        {
+          "status": 201
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "a caller key on a POST the API does not deduplicate does not make a network error retried",
+      "request": {
+        "method": "POST",
+        "path": "/domains",
+        "body": {
+          "name": "example.com"
+        },
+        "idempotencyKey": "conformance-key-0002"
+      },
+      "responses": [
+        {
+          "network": true
+        },
+        {
+          "status": 201
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "connection"
+        },
+        "hookSequence": [
+          "onRequest",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "a caller key on a POST the API does not deduplicate still lets a 429 be retried",
+      "request": {
+        "method": "POST",
+        "path": "/domains",
+        "body": {
+          "name": "example.com"
+        },
+        "idempotencyKey": "conformance-key-0002"
+      },
+      "responses": [
+        {
+          "status": 429
+        },
+        {
+          "status": 201
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 201
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "Retry-After in seconds sets the delay",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503,
+          "headers": {
+            "retry-after": "2"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            2000,
+            2000
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "Retry-After at the cap is waited",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 429,
+          "headers": {
+            "retry-after": "60"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            60000,
+            60000
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "Retry-After as an HTTP date in the past retries at once",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503,
+          "headers": {
+            "retry-after": "Wed, 21 Oct 2015 07:28:00 GMT"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            0,
+            0
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "x-should-retry true on the in-progress 409 retries with the same key",
+      "request": {
+        "method": "POST",
+        "path": "/emails",
+        "body": {
+          "from": "hello@example.com",
+          "to": "jane@example.org",
+          "subject": "Hi",
+          "text": "Hi"
+        },
+        "idempotencyKey": "conformance-key-0001",
+        "idempotent": true
+      },
+      "responses": [
+        {
+          "status": 409,
+          "headers": {
+            "x-should-retry": "true",
+            "retry-after": "1"
+          },
+          "body": {
+            "error": {
+              "status": 409,
+              "code": "idempotency_key_in_progress",
+              "title": "Idempotency key is already being processed"
+            }
+          }
+        },
+        {
+          "status": 202
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            1000,
+            1000
+          ]
+        ],
+        "sameIdempotencyKey": true,
+        "result": {
+          "status": 202
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "x-should-retry true retries a status the rules do not retry",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 400,
+          "headers": {
+            "x-should-retry": "true"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "x-should-retry true on a 2xx is not retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 200,
+          "headers": {
+            "x-should-retry": "true"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "x-should-retry false stops a retryable status",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503,
+          "headers": {
+            "x-should-retry": "false"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "Retry-After in decimal seconds sets the delay",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503,
+          "headers": {
+            "retry-after": "1.5"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            1500,
+            1500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "Retry-After in hexadecimal is ignored",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503,
+          "headers": {
+            "retry-after": "0x3C"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "Retry-After with a unit suffix is ignored",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503,
+          "headers": {
+            "retry-after": "5d"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "Retry-After above the cap is not waited and surfaces the error",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 429,
+          "headers": {
+            "retry-after": "61"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "delaysMs": [],
+        "error": {
+          "kind": "rate_limit",
+          "status": 429,
+          "retryAfterMs": 61000
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "Retry-After as an HTTP date beyond the cap is not waited",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503,
+          "headers": {
+            "retry-after": "Fri, 31 Dec 2100 23:59:59 GMT"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "delaysMs": [],
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "Retry-After above the cap wins over x-should-retry true",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503,
+          "headers": {
+            "x-should-retry": "true",
+            "retry-after": "61"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "delaysMs": [],
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "an attempt that throws is judged on its error, not an earlier response",
+      "request": {
+        "method": "POST",
+        "path": "/domains",
+        "body": {
+          "name": "example.com"
+        },
+        "maxRetries": 3
+      },
+      "responses": [
+        {
+          "status": 429
+        },
+        {
+          "network": true
+        },
+        {
+          "network": true
+        },
+        {
+          "network": true
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "error": {
+          "kind": "connection"
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "a network error after a Retry-After response waits the backoff",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503,
+          "headers": {
+            "retry-after": "2"
+          }
+        },
+        {
+          "network": true
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 3,
+        "delaysMs": [
+          [
+            2000,
+            2000
+          ],
+          [
+            750,
+            1000
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "retries disabled: a per-request maxRetries does not retry a 409",
+      "client": {
+        "retry": "none"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1",
+        "maxRetries": 2
+      },
+      "responses": [
+        {
+          "status": 409
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "conflict",
+          "status": 409
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "retries disabled: a per-request maxRetries does not retry an unkeyed POST 503",
+      "client": {
+        "retry": "none"
+      },
+      "request": {
+        "method": "POST",
+        "path": "/domains",
+        "body": {
+          "name": "example.com"
+        },
+        "maxRetries": 2
+      },
+      "responses": [
+        {
+          "status": 503
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "retries disabled: a GET 503 is not retried",
+      "client": {
+        "retry": "none"
+      },
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1",
+        "maxRetries": 2
+      },
+      "responses": [
+        {
+          "status": 503
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "an error thrown by the onRequest hook is not retried",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1",
+        "onRequestThrows": true
+      },
+      "responses": [
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 0,
+        "hookCalls": 1,
+        "error": {
+          "kind": "hook"
+        },
+        "hookSequence": [
+          "onRequest"
+        ]
+      }
+    },
+    {
+      "name": "an error thrown by the onResponse hook reaches the caller",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1",
+        "onResponseThrows": true
+      },
+      "responses": [
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "hook"
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse"
+        ]
+      }
+    },
+    {
+      "name": "a caller abort after a retryable response does not wait or retry",
+      "runtimes": [
+        "typescript"
+      ],
+      "reason": "Java has no per-request cancellation signal",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503,
+          "abortAfter": true
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "retries": 0,
+        "delaysMs": [],
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "a caller AbortSignal.timeout is not retried",
+      "runtimes": [
+        "typescript"
+      ],
+      "reason": "Java has no per-request cancellation signal",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "callerTimeout": true
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "retries": 0,
+        "error": {
+          "kind": "connection"
+        },
+        "hookSequence": [
+          "onRequest",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "x-should-retry is read in any letter case: True retries",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 400,
+          "headers": {
+            "x-should-retry": "True"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "delaysMs": [
+          [
+            375,
+            500
+          ]
+        ],
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    },
+    {
+      "name": "x-should-retry is read in any letter case: FALSE stops a retryable status",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503,
+          "headers": {
+            "x-should-retry": "FALSE"
+          }
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 1,
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "hooks run in order across retries that end in an error response",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 503
+        },
+        {
+          "network": true
+        },
+        {
+          "status": 503
+        }
+      ],
+      "expected": {
+        "calls": 3,
+        "retries": 2,
+        "error": {
+          "kind": "internal_server",
+          "status": 503
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onError"
+        ]
+      }
+    },
+    {
+      "name": "hooks run in order across a retry that ends in success",
+      "request": {
+        "method": "GET",
+        "path": "/emails/em_1"
+      },
+      "responses": [
+        {
+          "status": 429
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "calls": 2,
+        "retries": 1,
+        "result": {
+          "status": 200
+        },
+        "hookSequence": [
+          "onRequest",
+          "onRetry",
+          "onRequest",
+          "onResponse",
+          "onSuccess"
+        ]
+      }
+    }
+  ]
+}
